@@ -1,0 +1,45 @@
+# Production deployment reference.
+#
+# Usage on a server:
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+#
+# This runs the app from the optimized Next.js standalone build (Dockerfile "runner"
+# stage) and runs database migrations automatically before the app starts.
+# It does NOT expose Postgres on a host port — only the app container talks to it.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_URL: ${AUTH_URL}
+      NODE_ENV: production
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    command: ["start"]
+
+volumes:
+  postgres_data:

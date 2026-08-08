@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces — dark charcoal, never pure black */
+  --app: #14161b;
+  --surface: #1c1f26;
+  --surface-2: #262b35;
+  --surface-hover: #2d323d;
+
+  /* Borders */
+  --border: #2c303a;
+  --border-strong: #40465370;
+
+  /* Text */
+  --ink: #f5f6f8;
+  --ink-secondary: #aeb4c0;
+  --ink-muted: #82899a;
+  --ink-disabled: #5c626f;
+
+  /* Accent — single tasteful accent used throughout */
+  --accent: #6366f1;
+  --accent-strong: #4f46e5;
+  --accent-soft: #a5b4fc;
+  --accent-wash: #6366f126;
+
+  /* Status */
+  --danger: #f87171;
+  --danger-strong: #ef4444;
+  --success: #34d399;
+  --warning: #fbbf24;
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@theme inline {
+  --color-app: var(--app);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-hover: var(--surface-hover);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-disabled: var(--ink-disabled);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-wash: var(--accent-wash);
+
+  --color-danger: var(--danger);
+  --color-danger-strong: var(--danger-strong);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--app);
+  color: var(--ink);
+  font-family: var(--font-sans), -apple-system, system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background: var(--accent-wash);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--ink-muted);
+}
+
+/* iOS safe-area helpers */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Numeric inputs: hide native spinners for a cleaner look; keypad still shows */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@keyframes fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-slide-up {
+  animation: fade-slide-up 0.2s ease-out;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.animate-sheet-up {
+  animation: sheet-up 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
