@@ -31,7 +31,7 @@ services:
       AUTH_URL: ${AUTH_URL:-http://localhost:3000}
       NODE_ENV: development
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "${APP_PORT:-10000}:10000"
     volumes:
       - .:/app
       - /app/node_modules
