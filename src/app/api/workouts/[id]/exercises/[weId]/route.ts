@@ -17,6 +17,7 @@ async function assertOwnership(userId: string, workoutId: string, weId: string) 
 const updateSchema = z.object({
   notes: z.string().trim().max(1000).optional().nullable(),
   order: z.number().int().min(0).optional(),
+  completed: z.boolean().optional(),
 });
 
 export async function PATCH(

@@ -48,7 +48,7 @@ export function StartWorkoutSheet({
   return (
     <Sheet open={open} onClose={onClose} title="Start Workout">
       <div className="space-y-4">
-        <Button size="lg" fullWidth disabled={!!startingId} onClick={() => start(undefined)}>
+        <Button size="lg" fullWidth gradient="strength" disabled={!!startingId} onClick={() => start(undefined)}>
           {startingId === "empty" ? "Starting..." : "Start Empty Workout"}
         </Button>
 
@@ -60,10 +60,10 @@ export function StartWorkoutSheet({
                 key={routine.id}
                 disabled={!!startingId}
                 onClick={() => start(routine.id)}
-                className="flex w-full items-center justify-between rounded-xl border border-border-strong bg-surface px-4 py-3 text-left hover:bg-surface-hover disabled:opacity-60"
+                className="flex w-full items-center justify-between rounded-xl border border-border-strong bg-surface px-4 py-3 text-left transition-colors hover:bg-surface-hover disabled:opacity-60"
               >
-                <div>
-                  <p className="font-medium text-ink">{routine.name}</p>
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-ink">{routine.name}</p>
                   <p className="text-sm text-ink-secondary">{routine.exercises.length} exercises</p>
                 </div>
                 <ChevronRight className="h-4 w-4 shrink-0 text-ink-muted" />

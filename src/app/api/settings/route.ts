@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUserId, withErrorHandling } from "@/lib/api";
-import { unitsSchema } from "@/lib/validation";
+import { unitsSchema, colorSchemeSchema } from "@/lib/validation";
 
 export async function GET() {
   return withErrorHandling(async () => {
@@ -22,6 +22,7 @@ export async function GET() {
 const updateSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
   units: unitsSchema.optional(),
+  colorScheme: colorSchemeSchema.optional(),
 });
 
 export async function PATCH(req: Request) {
@@ -30,17 +31,19 @@ export async function PATCH(req: Request) {
     const body = await req.json();
     const data = updateSchema.parse(body);
 
+    const settingsUpdate: { units?: typeof data.units; colorScheme?: typeof data.colorScheme } = {};
+    if (data.units) settingsUpdate.units = data.units;
+    if (data.colorScheme) settingsUpdate.colorScheme = data.colorScheme;
+
     const [user, settings] = await Promise.all([
       data.name
         ? prisma.user.update({ where: { id: userId }, data: { name: data.name } })
         : prisma.user.findUnique({ where: { id: userId } }),
-      data.units
-        ? prisma.userSettings.upsert({
-            where: { userId },
-            update: { units: data.units },
-            create: { userId, units: data.units },
-          })
-        : prisma.userSettings.upsert({ where: { userId }, update: {}, create: { userId } }),
+      prisma.userSettings.upsert({
+        where: { userId },
+        update: settingsUpdate,
+        create: { userId, ...settingsUpdate },
+      }),
     ]);
 
     return NextResponse.json({

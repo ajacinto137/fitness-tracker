@@ -47,23 +47,24 @@ export function RoutineListScreen({ initialRoutines }: { initialRoutines: Routin
           <button
             onClick={() => router.push("/lifting/routines/new")}
             aria-label="New routine"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-strong text-white"
+            className="bg-gradient-primary flex h-10 w-10 items-center justify-center rounded-full text-accent-ink"
           >
             <Plus className="h-5 w-5" />
           </button>
         }
       />
 
-      <div className="space-y-3 px-5 py-5">
+      <div className="space-y-2 px-5 py-5">
         {routines.length === 0 ? (
           <EmptyState
             icon={ListChecks}
+            category="strength"
             title="No routines yet"
             description="Create a routine to make starting workouts faster."
             action={
               <Link
                 href="/lifting/routines/new"
-                className="rounded-xl bg-accent-strong px-4 py-2.5 text-sm font-semibold text-white"
+                className="bg-gradient-primary rounded-xl px-4 py-2.5 text-sm font-semibold text-accent-ink"
               >
                 Create Routine
               </Link>
@@ -75,8 +76,8 @@ export function RoutineListScreen({ initialRoutines }: { initialRoutines: Routin
               <Card className="transition-colors hover:bg-surface-hover">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-ink">{routine.name}</p>
-                    <p className="mt-1 truncate text-sm text-ink-secondary">
+                    <p className="text-strength-soft font-semibold">{routine.name}</p>
+                    <p className="text-strength-muted mt-1 truncate text-sm">
                       {routine.exercises.length === 0
                         ? "No exercises yet"
                         : routine.exercises.map((re) => re.exercise.name).join(", ")}

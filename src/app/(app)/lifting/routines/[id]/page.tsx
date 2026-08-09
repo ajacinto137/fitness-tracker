@@ -1,12 +1,11 @@
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireSessionUserId } from "@/lib/session";
 import { RoutineEditorScreen } from "@/components/lifting/RoutineEditorScreen";
 
 export default async function EditRoutinePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await auth();
-  const userId = session!.user.id;
+  const userId = await requireSessionUserId();
 
   const [routine, exercises] = await Promise.all([
     prisma.workoutRoutine.findFirst({

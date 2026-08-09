@@ -6,8 +6,8 @@ import { Scale, Dumbbell } from "lucide-react";
 import { clsx } from "clsx";
 
 const tabs = [
-  { href: "/weight", label: "Weight", icon: Scale },
-  { href: "/lifting", label: "Lifting", icon: Dumbbell },
+  { href: "/weight", label: "Weight", icon: Scale, iconClass: "text-weight", washClass: "bg-weight-wash", glowClass: "glow-weight" },
+  { href: "/lifting", label: "Lifting", icon: Dumbbell, iconClass: "text-strength", washClass: "bg-strength-wash", glowClass: "glow-strength" },
 ];
 
 export function BottomNav() {
@@ -25,14 +25,21 @@ export function BottomNav() {
               href={tab.href}
               className="flex flex-1 flex-col items-center gap-1 py-2.5"
             >
-              <Icon
-                className={clsx("h-6 w-6", active ? "text-accent-soft" : "text-ink-muted")}
-                strokeWidth={active ? 2.4 : 2}
-              />
               <span
                 className={clsx(
-                  "text-xs font-medium",
-                  active ? "text-ink" : "text-ink-muted"
+                  "flex h-7 w-10 items-center justify-center rounded-full transition-all duration-200",
+                  active && [tab.washClass, tab.glowClass]
+                )}
+              >
+                <Icon
+                  className={clsx("h-5 w-5 transition-colors duration-200", active ? tab.iconClass : "text-ink-muted")}
+                  strokeWidth={active ? 2.4 : 2}
+                />
+              </span>
+              <span
+                className={clsx(
+                  "text-xs font-medium transition-colors duration-200",
+                  active ? tab.iconClass : "text-ink-muted"
                 )}
               >
                 {tab.label}

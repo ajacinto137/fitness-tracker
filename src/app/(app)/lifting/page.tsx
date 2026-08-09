@@ -1,5 +1,5 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireSessionUserId } from "@/lib/session";
 import { LiftingDashboardScreen } from "@/components/lifting/LiftingDashboardScreen";
 
 function startOfWeek(date: Date) {
@@ -12,8 +12,7 @@ function startOfWeek(date: Date) {
 }
 
 export default async function LiftingDashboardPage() {
-  const session = await auth();
-  const userId = session!.user.id;
+  const userId = await requireSessionUserId();
 
   const [activeWorkout, recentWorkouts, routines, recentWorkoutExercises, workoutsThisWeek, recentPR] =
     await Promise.all([

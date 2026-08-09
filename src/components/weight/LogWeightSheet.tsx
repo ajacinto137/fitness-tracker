@@ -103,7 +103,7 @@ function LogWeightForm({
         onChange={(e) => setNote(e.target.value)}
       />
       {error && <p className="text-sm text-danger">{error}</p>}
-      <Button type="submit" fullWidth size="lg" disabled={saving}>
+      <Button type="submit" fullWidth size="lg" gradient="weight" disabled={saving}>
         {saving ? "Saving..." : "Save"}
       </Button>
     </form>

@@ -3,11 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Play, ChevronRight, Dumbbell, ListChecks, Trophy } from "lucide-react";
+import { Play, ChevronRight, Trophy } from "lucide-react";
 import type { Exercise, PersonalRecordType, Prisma, Workout } from "@prisma/client";
 import { TopBar } from "@/components/nav/TopBar";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { IconContainer } from "@/components/ui/IconContainer";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StartWorkoutSheet } from "@/components/lifting/StartWorkoutSheet";
 import { displayDate } from "@/lib/date";
 import { MUSCLE_GROUP_LABELS } from "@/lib/muscle-groups";
@@ -53,11 +56,16 @@ export function LiftingDashboardScreen({
       <TopBar title="Lifting" />
       <div className="space-y-6 px-5 py-5">
         {activeWorkout ? (
-          <Button size="lg" fullWidth onClick={() => router.push(`/lifting/workout/${activeWorkout.id}`)}>
+          <Button
+            size="lg"
+            fullWidth
+            gradient="strength"
+            onClick={() => router.push(`/lifting/workout/${activeWorkout.id}`)}
+          >
             <Play className="h-5 w-5" /> Continue Workout
           </Button>
         ) : (
-          <Button size="lg" fullWidth onClick={() => setStartOpen(true)}>
+          <Button size="lg" fullWidth gradient="strength" onClick={() => setStartOpen(true)}>
             <Play className="h-5 w-5" /> Start Workout
           </Button>
         )}
@@ -65,23 +73,24 @@ export function LiftingDashboardScreen({
         <div className="grid grid-cols-2 gap-3">
           <Card className="py-3">
             <p className="text-xs font-medium text-ink-muted">This Week</p>
-            <p className="mt-1 text-lg font-semibold text-ink">
-              {workoutsThisWeek} workout{workoutsThisWeek === 1 ? "" : "s"}
+            <p className="mt-0.5 truncate text-lg font-semibold">
+              <span className="text-gradient-strength">{workoutsThisWeek}</span>{" "}
+              <span className="text-ink">workout{workoutsThisWeek === 1 ? "" : "s"}</span>
             </p>
           </Card>
           <Card className="py-3">
             <p className="text-xs font-medium text-ink-muted">Last Workout</p>
-            <p className="mt-1 truncate text-lg font-semibold text-ink">
+            <p className="text-strength-soft mt-0.5 truncate text-lg font-semibold">
               {recentWorkouts[0] ? displayDate(recentWorkouts[0].startedAt) : "—"}
             </p>
           </Card>
         </div>
 
         {recentPR && (
-          <Card className="flex items-center gap-3">
-            <Trophy className="h-5 w-5 shrink-0 text-warning" />
-            <p className="text-sm text-ink">
-              <span className="font-semibold">{recentPR.exerciseName}</span> — new{" "}
+          <Card accent="achievement" className="flex items-center gap-3">
+            <IconContainer icon={Trophy} category="achievement" size="sm" />
+            <p className="min-w-0 text-sm text-ink">
+              <span className="text-gold font-semibold">{recentPR.exerciseName}</span> — new{" "}
               {PR_LABELS[recentPR.type]} on {displayDate(recentPR.achievedAt)}
             </p>
           </Card>
@@ -96,14 +105,16 @@ export function LiftingDashboardScreen({
             <div className="space-y-2">
               {recentWorkouts.map((w) => (
                 <Link key={w.id} href={`/lifting/workout/${w.id}`}>
-                  <Card className="flex items-center justify-between py-3 hover:bg-surface-hover">
-                    <div>
-                      <p className="font-medium text-ink">{w.name}</p>
-                      <p className="text-sm text-ink-secondary">
-                        {displayDate(w.startedAt)} · {w.exerciseCount} exercises
+                  <Card className="flex items-center justify-between py-3 transition-colors hover:bg-surface-hover">
+                    <div className="min-w-0">
+                      <p className="text-strength-soft truncate font-medium">{w.name}</p>
+                      <p className="text-sm">
+                        <span className="text-strength-muted">{displayDate(w.startedAt)}</span>
+                        <span className="text-ink-muted"> · </span>
+                        <span className="text-accent-muted">{w.exerciseCount} exercises</span>
                       </p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-ink-muted" />
+                    <ChevronRight className="text-strength-muted h-4 w-4 shrink-0" />
                   </Card>
                 </Link>
               ))}
@@ -120,15 +131,12 @@ export function LiftingDashboardScreen({
             <div className="space-y-2">
               {routines.slice(0, 4).map((r) => (
                 <Link key={r.id} href={`/lifting/routines/${r.id}`}>
-                  <Card className="flex items-center justify-between py-3 hover:bg-surface-hover">
-                    <div className="flex items-center gap-3">
-                      <ListChecks className="h-4 w-4 text-ink-muted" />
-                      <div>
-                        <p className="font-medium text-ink">{r.name}</p>
-                        <p className="text-sm text-ink-secondary">{r.exercises.length} exercises</p>
-                      </div>
+                  <Card className="flex items-center justify-between py-3 transition-colors hover:bg-surface-hover">
+                    <div className="min-w-0">
+                      <p className="text-strength-soft truncate font-medium">{r.name}</p>
+                      <p className="text-accent-muted text-sm">{r.exercises.length} exercises</p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-ink-muted" />
+                    <ChevronRight className="text-strength-muted h-4 w-4 shrink-0" />
                   </Card>
                 </Link>
               ))}
@@ -143,12 +151,9 @@ export function LiftingDashboardScreen({
             <div className="space-y-2">
               {recentExercises.map((ex) => (
                 <Link key={ex.id} href={`/lifting/exercises/${ex.id}`}>
-                  <Card className="flex items-center justify-between py-3 hover:bg-surface-hover">
-                    <div className="flex items-center gap-3">
-                      <Dumbbell className="h-4 w-4 text-ink-muted" />
-                      <p className="font-medium text-ink">{ex.name}</p>
-                    </div>
-                    <span className="text-xs text-ink-muted">{MUSCLE_GROUP_LABELS[ex.muscleGroup]}</span>
+                  <Card className="flex items-center justify-between py-3 transition-colors hover:bg-surface-hover">
+                    <p className="text-strength-soft truncate font-medium">{ex.name}</p>
+                    <Badge>{MUSCLE_GROUP_LABELS[ex.muscleGroup]}</Badge>
                   </Card>
                 </Link>
               ))}
@@ -173,12 +178,7 @@ function Section({
 }) {
   return (
     <section className="space-y-2">
-      <div className="flex items-center justify-between px-1">
-        <h2 className="font-semibold text-ink">{title}</h2>
-        <Link href={href} className="text-sm font-medium text-accent-soft">
-          See all
-        </Link>
-      </div>
+      <SectionHeader title={title} href={href} category="strength" />
       {children}
     </section>
   );

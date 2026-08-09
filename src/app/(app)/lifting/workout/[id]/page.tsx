@@ -1,18 +1,18 @@
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireSessionUserId } from "@/lib/session";
+import { getUserSettings } from "@/lib/settings";
 import { getWorkoutDetail } from "@/lib/workout-detail";
 import { ActiveWorkoutScreen } from "@/components/lifting/ActiveWorkoutScreen";
 
 export default async function WorkoutPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await auth();
-  const userId = session!.user.id;
+  const userId = await requireSessionUserId();
 
   const [detail, exercises, settings] = await Promise.all([
     getWorkoutDetail(userId, id),
     prisma.exercise.findMany({ where: { userId }, orderBy: { name: "asc" } }),
-    prisma.userSettings.upsert({ where: { userId }, update: {}, create: { userId } }),
+    getUserSettings(userId),
   ]);
 
   if (!detail) notFound();
@@ -34,6 +34,7 @@ export default async function WorkoutPage({ params }: { params: Promise<{ id: st
           id: we.id,
           order: we.order,
           notes: we.notes,
+          completed: we.completed,
           exercise: { id: we.exercise.id, name: we.exercise.name },
           sets: we.sets.map((s) => ({
             id: s.id,

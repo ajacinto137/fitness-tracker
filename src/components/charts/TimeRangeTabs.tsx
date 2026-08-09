@@ -20,7 +20,7 @@ export function TimeRangeTabs({
           onClick={() => onChange(r)}
           className={clsx(
             "flex-1 rounded-lg py-1.5 text-sm font-semibold transition-colors",
-            value === r ? "bg-accent-strong text-white" : "text-ink-secondary hover:text-ink"
+            value === r ? "bg-gradient-primary text-accent-ink" : "text-ink-secondary hover:text-ink"
           )}
         >
           {r}

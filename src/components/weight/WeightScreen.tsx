@@ -1,13 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Scale } from "lucide-react";
+import { Plus, Pencil, Trash2, Scale } from "lucide-react";
 import type { Units } from "@prisma/client";
 import { TopBar } from "@/components/nav/TopBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { TrendStat } from "@/components/ui/TrendStat";
 import { LogWeightSheet, type WeightFormValues } from "@/components/weight/LogWeightSheet";
 import { ProgressChart, type ChartPoint } from "@/components/charts/ProgressChart";
 import { TimeRangeTabs } from "@/components/charts/TimeRangeTabs";
@@ -125,6 +127,11 @@ export function WeightScreen({
     return `${kg > 0 ? "+" : "-"}${value} ${unitLabel(units)}`;
   }
 
+  function trendDirection(kg: number | null): "up" | "down" | null {
+    if (kg === null || roundWeight(Math.abs(fromKg(kg, units))) === 0) return null;
+    return kg > 0 ? "up" : "down";
+  }
+
   const initialFormValues: WeightFormValues | undefined = editing
     ? {
         weight: String(roundWeight(fromKg(editing.weightKg, units))),
@@ -139,31 +146,57 @@ export function WeightScreen({
       <div className="space-y-6 px-5 py-5">
         {stats ? (
           <Card className="space-y-5">
-            <div>
+            <div
+              className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full opacity-20 blur-3xl"
+              style={{ background: "radial-gradient(closest-side, var(--weight), transparent)" }}
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full opacity-[0.15] blur-3xl"
+              style={{ background: "radial-gradient(closest-side, var(--accent), transparent)" }}
+              aria-hidden
+            />
+            <div className="relative">
               <p className="text-sm font-medium text-ink-secondary">Current Weight</p>
-              <p className="text-4xl font-bold tracking-tight text-ink">
+              <p className="text-gradient-weight text-4xl font-bold tracking-tight">
                 {roundWeight(fromKg(stats.current, units))}
-                <span className="ml-1 text-lg font-medium text-ink-secondary">
+                <span className="text-weight-soft ml-1 text-lg font-medium">
                   {unitLabel(units)}
                 </span>
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <DeltaStat label="Prev" delta={stats.changeFromPrevious} formatDelta={formatDelta} />
-              <DeltaStat label="7 days" delta={stats.change7d} formatDelta={formatDelta} />
-              <DeltaStat label="30 days" delta={stats.change30d} formatDelta={formatDelta} />
+            <div className="relative grid grid-cols-3 gap-3 text-center">
+              <TrendStat
+                label="Prev"
+                value={formatDelta(stats.changeFromPrevious)}
+                direction={trendDirection(stats.changeFromPrevious)}
+                color="strength"
+              />
+              <TrendStat
+                label="7 days"
+                value={formatDelta(stats.change7d)}
+                direction={trendDirection(stats.change7d)}
+                color="weight"
+              />
+              <TrendStat
+                label="30 days"
+                value={formatDelta(stats.change30d)}
+                direction={trendDirection(stats.change30d)}
+                color="success"
+              />
             </div>
-            <Button size="lg" fullWidth onClick={openCreate}>
+            <Button size="lg" fullWidth gradient="weight" onClick={openCreate} className="relative">
               <Plus className="h-5 w-5" /> Log Weight
             </Button>
           </Card>
         ) : (
           <EmptyState
             icon={Scale}
+            category="weight"
             title="No weight entries yet"
             description="Log your weight to start seeing your trend."
             action={
-              <Button onClick={openCreate}>
+              <Button gradient="weight" onClick={openCreate}>
                 <Plus className="h-5 w-5" /> Log Weight
               </Button>
             }
@@ -173,17 +206,17 @@ export function WeightScreen({
         {sorted.length > 1 && (
           <Card className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-ink">Trend</h2>
+              <h2 className="text-weight-soft font-semibold">Trend</h2>
               <div className="flex items-center gap-1.5 text-xs text-ink-muted">
                 <span className="h-1.5 w-1.5 rounded-full bg-ink-secondary" /> Actual
-                <span className="ml-2 h-1.5 w-3 rounded-full bg-accent-soft" /> 7-day avg
+                <span className="ml-2 h-1.5 w-3 rounded-full bg-weight" /> 7-day avg
               </div>
             </div>
             <ProgressChart
               data={chartData}
               series={[
                 { dataKey: "actual", label: "Actual", color: "var(--ink-secondary)", style: "dots" },
-                { dataKey: "trend", label: "7-day avg", color: "var(--accent-soft)", style: "line" },
+                { dataKey: "trend", label: "7-day avg", color: "var(--weight)", style: "line", areaFill: true },
               ]}
               valueFormatter={(v) => `${v} ${unitLabel(units)}`}
             />
@@ -193,15 +226,16 @@ export function WeightScreen({
 
         {recent.length > 0 && (
           <div className="space-y-2">
-            <h2 className="px-1 font-semibold text-ink">Recent Entries</h2>
+            <SectionHeader title="Recent Entries" category="weight" />
             <div className="space-y-2">
               {recent.map((entry) => (
                 <Card key={entry.id} className="flex items-center justify-between py-3">
                   <div>
-                    <p className="font-medium text-ink">
-                      {roundWeight(fromKg(entry.weightKg, units))} {unitLabel(units)}
+                    <p className="font-semibold text-weight">
+                      {roundWeight(fromKg(entry.weightKg, units))}
+                      <span className="ml-1 text-sm font-medium text-ink-secondary">{unitLabel(units)}</span>
                     </p>
-                    <p className="text-sm text-ink-secondary">
+                    <p className="text-weight-muted text-sm">
                       {displayDate(entry.date, { year: "numeric" })}
                       {entry.note ? ` · ${entry.note}` : ""}
                     </p>
@@ -245,27 +279,6 @@ export function WeightScreen({
         onConfirm={confirmDelete}
         onCancel={() => setDeleting(null)}
       />
-    </div>
-  );
-}
-
-function DeltaStat({
-  label,
-  delta,
-  formatDelta,
-}: {
-  label: string;
-  delta: number | null;
-  formatDelta: (kg: number | null) => string;
-}) {
-  const Icon = delta === null || delta === 0 ? null : delta > 0 ? ArrowUp : ArrowDown;
-  return (
-    <div>
-      <p className="text-xs font-medium text-ink-muted">{label}</p>
-      <p className="mt-0.5 flex items-center justify-center gap-0.5 text-sm font-semibold text-ink">
-        {Icon && <Icon className="h-3.5 w-3.5 text-ink-secondary" />}
-        {formatDelta(delta)}
-      </p>
     </div>
   );
 }

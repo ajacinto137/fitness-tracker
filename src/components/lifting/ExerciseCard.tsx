@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronUp, ChevronDown, Plus, Trash2, NotebookPen } from "lucide-react";
+import { ChevronUp, ChevronDown, Plus, Trash2, NotebookPen, Check, CheckCircle2, RotateCcw } from "lucide-react";
+import { clsx } from "clsx";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Textarea } from "@/components/ui/Input";
 import { SetRow, type SetRowData } from "@/components/lifting/SetRow";
-import { unitLabel } from "@/lib/units";
+import { formatWeight, unitLabel } from "@/lib/units";
 import type { Units } from "@prisma/client";
 
 export function ExerciseCard({
@@ -19,7 +22,11 @@ export function ExerciseCard({
   canReorder,
   isFirst,
   isLast,
-  readOnly,
+  completed = false,
+  workoutFinished = false,
+  isLastIncomplete = false,
+  isCurrent = false,
+  completing = false,
   onSetChange,
   onSetDelete,
   onAddSet,
@@ -27,6 +34,8 @@ export function ExerciseCard({
   onNotesChange,
   onNotesBlur,
   onMove,
+  onComplete,
+  onReopen,
 }: {
   exerciseId: string;
   exerciseName: string;
@@ -37,7 +46,11 @@ export function ExerciseCard({
   canReorder: boolean;
   isFirst: boolean;
   isLast: boolean;
-  readOnly?: boolean;
+  completed?: boolean;
+  workoutFinished?: boolean;
+  isLastIncomplete?: boolean;
+  isCurrent?: boolean;
+  completing?: boolean;
   onSetChange: (setId: string, patch: Partial<{ weight: string; reps: string; completed: boolean }>) => void;
   onSetDelete: (setId: string) => void;
   onAddSet: () => void;
@@ -45,23 +58,40 @@ export function ExerciseCard({
   onNotesChange: (notes: string) => void;
   onNotesBlur?: () => void;
   onMove?: (direction: -1 | 1) => void;
+  onComplete?: () => void;
+  onReopen?: () => void;
 }) {
   const [notesOpen, setNotesOpen] = useState(!!notes);
 
+  const locked = completed && !workoutFinished;
+  const highlighted = isCurrent && !locked && !workoutFinished;
+
   const previousLabel = previousSets
-    ? previousSets.map((s) => `${Math.round(s.weightKg * 10) / 10} × ${s.reps}`).join(", ")
+    ? previousSets.map((s) => `${formatWeight(s.weightKg, units)} × ${s.reps}`).join(", ")
     : null;
 
   return (
-    <Card className="space-y-3">
-      <div className="flex items-start justify-between gap-2">
-        <Link
-          href={`/lifting/exercises/${exerciseId}`}
-          className="min-w-0 truncate font-semibold uppercase tracking-wide text-ink hover:text-accent-soft"
-        >
-          {exerciseName}
-        </Link>
-        {!readOnly && (
+    <Card
+      accent={highlighted ? "primary" : "none"}
+      elevated={highlighted}
+      className={clsx("space-y-3 transition-opacity", locked && "opacity-75")}
+    >
+      {locked && <div className="absolute inset-0 bg-success-wash" aria-hidden />}
+      <div className="relative flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <Link
+            href={`/lifting/exercises/${exerciseId}`}
+            className="text-strength-soft min-w-0 truncate font-semibold uppercase tracking-wide hover:text-accent-soft"
+          >
+            {exerciseName}
+          </Link>
+          {locked && (
+            <Badge variant="success" icon={CheckCircle2}>
+              Completed
+            </Badge>
+          )}
+        </div>
+        {!locked && (
           <div className="flex shrink-0 items-center gap-0.5">
             <button
               onClick={() => setNotesOpen((v) => !v)}
@@ -103,7 +133,7 @@ export function ExerciseCard({
 
       {previousLabel && (
         <p className="text-sm text-ink-secondary">
-          Previous: <span className="text-ink-muted">{previousLabel}</span>
+          Previous: <span className="text-strength-muted">{previousLabel}</span>
         </p>
       )}
 
@@ -133,21 +163,36 @@ export function ExerciseCard({
             set={set}
             previousLabel={
               previousSets?.[index]
-                ? `${Math.round(previousSets[index].weightKg * 10) / 10} × ${previousSets[index].reps}`
+                ? `${formatWeight(previousSets[index].weightKg, units)} × ${previousSets[index].reps}`
                 : null
             }
+            disabled={locked}
             onChange={(patch) => onSetChange(set.id, patch)}
             onDelete={() => onSetDelete(set.id)}
           />
         ))}
       </div>
 
-      <button
-        onClick={onAddSet}
-        className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border-strong py-2.5 text-sm font-medium text-ink-secondary hover:text-ink"
-      >
-        <Plus className="h-4 w-4" /> Add Set
-      </button>
+      {!locked && (
+        <button
+          onClick={onAddSet}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border-strong py-2.5 text-sm font-medium text-ink-secondary hover:text-ink"
+        >
+          <Plus className="h-4 w-4" /> Add Set
+        </button>
+      )}
+
+      {!workoutFinished &&
+        (completed ? (
+          <Button variant="secondary" fullWidth onClick={onReopen}>
+            <RotateCcw className="h-4 w-4" /> Reopen Exercise
+          </Button>
+        ) : (
+          <Button fullWidth gradient="success" onClick={onComplete} disabled={completing}>
+            <Check className="h-4 w-4" />
+            {completing ? "Saving..." : isLastIncomplete ? "Finish Workout" : "Complete Exercise"}
+          </Button>
+        ))}
     </Card>
   );
 }

@@ -1,10 +1,9 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireSessionUserId } from "@/lib/session";
 import { HistoryListScreen } from "@/components/lifting/HistoryListScreen";
 
 export default async function HistoryPage() {
-  const session = await auth();
-  const userId = session!.user.id;
+  const userId = await requireSessionUserId();
 
   const workouts = await prisma.workout.findMany({
     where: { userId, finishedAt: { not: null } },

@@ -7,6 +7,7 @@ import type { Exercise, MuscleGroup } from "@prisma/client";
 import { clsx } from "clsx";
 import { SubPageHeader } from "@/components/nav/SubPageHeader";
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ExerciseFormSheet, type ExerciseFormValues } from "@/components/lifting/ExerciseFormSheet";
 import { apiSend, ClientApiError } from "@/lib/client-fetch";
@@ -44,7 +45,7 @@ export function ExerciseLibraryScreen({ initialExercises }: { initialExercises: 
           <button
             onClick={() => setSheetOpen(true)}
             aria-label="New exercise"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-strong text-white"
+            className="bg-gradient-primary flex h-10 w-10 items-center justify-center rounded-full text-accent-ink"
           >
             <Plus className="h-5 w-5" />
           </button>
@@ -78,6 +79,7 @@ export function ExerciseLibraryScreen({ initialExercises }: { initialExercises: 
           exercises.length === 0 ? (
             <EmptyState
               icon={Dumbbell}
+              category="strength"
               title="No exercises yet"
               description="Add your first exercise to start building routines and workouts."
             />
@@ -89,10 +91,8 @@ export function ExerciseLibraryScreen({ initialExercises }: { initialExercises: 
             {filtered.map((ex) => (
               <Link key={ex.id} href={`/lifting/exercises/${ex.id}`}>
                 <Card className="flex items-center justify-between py-3.5 transition-colors hover:bg-surface-hover">
-                  <span className="font-medium text-ink">{ex.name}</span>
-                  <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-medium text-ink-secondary">
-                    {MUSCLE_GROUP_LABELS[ex.muscleGroup]}
-                  </span>
+                  <span className="text-strength-soft truncate font-medium">{ex.name}</span>
+                  <Badge>{MUSCLE_GROUP_LABELS[ex.muscleGroup]}</Badge>
                 </Card>
               </Link>
             ))}
@@ -119,7 +119,7 @@ function FilterChip({
       onClick={onClick}
       className={clsx(
         "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
-        active ? "bg-accent-strong text-white" : "bg-surface-2 text-ink-secondary hover:text-ink"
+        active ? "bg-gradient-primary text-accent-ink" : "bg-surface-2 text-ink-secondary hover:text-ink"
       )}
     >
       {label}

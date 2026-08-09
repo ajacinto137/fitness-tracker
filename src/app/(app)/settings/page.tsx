@@ -1,14 +1,14 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireSessionUserId } from "@/lib/session";
+import { getUserSettings } from "@/lib/settings";
 import { SettingsScreen } from "@/components/settings/SettingsScreen";
 
 export default async function SettingsPage() {
-  const session = await auth();
-  const userId = session!.user.id;
+  const userId = await requireSessionUserId();
 
   const [user, settings] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true, createdAt: true } }),
-    prisma.userSettings.upsert({ where: { userId }, update: {}, create: { userId } }),
+    getUserSettings(userId),
   ]);
 
   return (

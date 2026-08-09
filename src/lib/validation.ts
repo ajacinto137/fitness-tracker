@@ -55,3 +55,11 @@ export const setSchema = z.object({
 });
 
 export const unitsSchema = z.enum(["LB", "KG"]);
+
+export const colorSchemeSchema = z.enum([
+  "VIBRANT",
+  "NEON_LIME",
+  "ELECTRIC_OCEAN",
+  "NEON_SUNSET",
+  "ULTRAVIOLET",
+]);

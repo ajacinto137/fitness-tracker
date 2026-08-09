@@ -88,7 +88,7 @@ function ExerciseForm({
               className={clsx(
                 "rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
                 values.muscleGroup === g
-                  ? "bg-accent-strong text-white"
+                  ? "bg-gradient-primary text-accent-ink"
                   : "bg-surface-2 text-ink-secondary hover:text-ink"
               )}
             >

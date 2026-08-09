@@ -32,7 +32,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="animate-sheet-up relative w-full max-w-lg rounded-t-3xl border-t border-border-strong bg-surface-2 pb-safe shadow-2xl sm:rounded-3xl sm:border"
+        className="bg-surface-elevated animate-sheet-up relative w-full max-w-lg rounded-t-3xl border-t border-border-strong pb-safe shadow-2xl sm:rounded-3xl sm:border"
       >
         <div className="flex items-center justify-between px-5 pt-5">
           <h2 className="text-lg font-semibold text-ink">{title}</h2>

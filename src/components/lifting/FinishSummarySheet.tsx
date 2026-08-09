@@ -3,7 +3,9 @@
 import { Trophy } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Button } from "@/components/ui/Button";
-import { fromKg, roundWeight, unitLabel } from "@/lib/units";
+import { Badge } from "@/components/ui/Badge";
+import { IconContainer } from "@/components/ui/IconContainer";
+import { fromKg, formatWeight, unitLabel } from "@/lib/units";
 import { formatDurationShort } from "@/lib/duration";
 import type { Units } from "@prisma/client";
 
@@ -30,11 +32,12 @@ export function FinishSummarySheet({
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-3">
             <SummaryStat label="Duration" value={formatDurationShort(summary.durationMs)} />
-            <SummaryStat label="Exercises" value={String(summary.exercisesCompleted)} />
-            <SummaryStat label="Total Sets" value={String(summary.totalSets)} />
+            <SummaryStat label="Exercises" value={String(summary.exercisesCompleted)} color="strength" />
+            <SummaryStat label="Total Sets" value={String(summary.totalSets)} color="strength" />
             <SummaryStat
               label="Total Volume"
               value={`${Math.round(fromKg(summary.totalVolumeKg, units)).toLocaleString()} ${unitLabel(units)}`}
+              color="accent"
             />
           </div>
 
@@ -44,14 +47,16 @@ export function FinishSummarySheet({
               {summary.newRecords.map((r, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 rounded-xl border border-warning/40 bg-surface-2 px-3 py-2.5"
+                  className="relative flex items-center gap-3 overflow-hidden rounded-xl border border-gold-wash bg-surface-2 px-3 py-2.5"
                 >
-                  <Trophy className="h-5 w-5 shrink-0 text-warning" />
-                  <p className="text-sm text-ink">
-                    <span className="font-semibold">{r.exerciseName}</span> —{" "}
-                    {roundWeight(fromKg(r.value, units))} {unitLabel(units)}
+                  <span className="bg-gradient-achievement absolute inset-y-0 left-0 w-1" aria-hidden />
+                  <IconContainer icon={Trophy} category="achievement" size="sm" />
+                  <p className="min-w-0 flex-1 text-sm text-ink">
+                    <span className="text-gold font-semibold">{r.exerciseName}</span> —{" "}
+                    <span className="font-semibold text-accent">{formatWeight(r.value, units)}</span>
                     {r.reps ? ` × ${r.reps}` : ""}
                   </p>
+                  <Badge variant="achievement">PR</Badge>
                 </div>
               ))}
             </div>
@@ -66,11 +71,24 @@ export function FinishSummarySheet({
   );
 }
 
-function SummaryStat({ label, value }: { label: string; value: string }) {
+const summaryColorClass: Record<"strength" | "accent", string> = {
+  strength: "text-strength",
+  accent: "text-accent",
+};
+
+function SummaryStat({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: string;
+  color?: "strength" | "accent";
+}) {
   return (
     <div className="rounded-xl bg-surface-2 px-3 py-3 text-center">
       <p className="text-xs font-medium text-ink-muted">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-ink">{value}</p>
+      <p className={`mt-1 text-lg font-semibold ${color ? summaryColorClass[color] : "text-ink"}`}>{value}</p>
     </div>
   );
 }

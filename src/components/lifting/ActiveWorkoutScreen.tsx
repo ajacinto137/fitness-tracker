@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Check, Trash2, Plus, NotebookPen } from "lucide-react";
 import type { Exercise, Units } from "@prisma/client";
@@ -13,7 +13,7 @@ import { RestTimerBar } from "@/components/lifting/RestTimerBar";
 import { FinishSummarySheet, type WorkoutSummary } from "@/components/lifting/FinishSummarySheet";
 import { useToast } from "@/components/ui/Toast";
 import { apiSend, ClientApiError } from "@/lib/client-fetch";
-import { fromKg, toKg, roundWeight } from "@/lib/units";
+import { fromKg, roundWeight, formatWeight } from "@/lib/units";
 import { formatDuration } from "@/lib/duration";
 import type { SetRowData } from "@/components/lifting/SetRow";
 
@@ -29,6 +29,7 @@ interface ExerciseInput {
   id: string;
   order: number;
   notes: string | null;
+  completed: boolean;
   exercise: { id: string; name: string };
   sets: SetInput[];
 }
@@ -47,6 +48,7 @@ interface ExerciseState {
   exerciseId: string;
   exerciseName: string;
   notes: string;
+  completed: boolean;
   sets: SetRowData[];
 }
 
@@ -85,9 +87,12 @@ export function ActiveWorkoutScreen({
         exerciseId: we.exercise.id,
         exerciseName: we.exercise.name,
         notes: we.notes ?? "",
+        completed: we.completed,
         sets: we.sets.map((s) => toSetRow(s, units)),
       }))
   );
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const exerciseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [previousMap, setPreviousMap] = useState(previousByExercise);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [deleteExerciseId, setDeleteExerciseId] = useState<string | null>(null);
@@ -132,8 +137,11 @@ export function ActiveWorkoutScreen({
       )
     );
 
+    // The set API stores weightKg and converts from the user's display unit
+    // itself (see /api/sets/[id]), so this must send the raw entered number —
+    // converting here too would double-convert and corrupt the stored value.
     const body: { weight?: number; reps?: number; completed?: boolean } = {};
-    if (patch.weight !== undefined) body.weight = patch.weight ? toKg(Number(patch.weight), units) : 0;
+    if (patch.weight !== undefined) body.weight = patch.weight ? Number(patch.weight) : 0;
     if (patch.reps !== undefined) body.reps = patch.reps ? Number(patch.reps) : 0;
     if (patch.completed !== undefined) body.completed = patch.completed;
 
@@ -144,7 +152,7 @@ export function ActiveWorkoutScreen({
       if (newPR) {
         show(`New PR — ${newPR.exerciseName}`, {
           variant: "pr",
-          description: `${roundWeight(fromKg(newPR.value, units))} ${units === "LB" ? "lb" : "kg"}${
+          description: `${formatWeight(newPR.value, units)}${
             newPR.type === "HEAVIEST_WEIGHT" ? ` × ${newPR.reps}` : ""
           }`,
         });
@@ -206,6 +214,7 @@ export function ActiveWorkoutScreen({
           exerciseId: newExercise.id,
           exerciseName: newExercise.name,
           notes: workoutExercise.notes ?? "",
+          completed: false,
           sets: workoutExercise.sets.map((s) => toSetRow(s, units)),
         },
       ]);
@@ -266,6 +275,46 @@ export function ActiveWorkoutScreen({
     }
   }
 
+  async function handleCompleteExercise(weId: string) {
+    const exercise = exercises.find((e) => e.weId === weId);
+    if (!exercise || exercise.completed) return;
+    setCompletingId(weId);
+    try {
+      const setsToComplete = exercise.sets.filter((s) => !s.completed && s.reps !== "");
+      await Promise.all(setsToComplete.map((s) => handleSetChange(weId, s.id, { completed: true })));
+      await apiSend(`/api/workouts/${workout.id}/exercises/${weId}`, "PATCH", { completed: true });
+      setExercises((prev) => prev.map((e) => (e.weId === weId ? { ...e, completed: true } : e)));
+
+      const remaining = exercises.filter((e) => e.weId !== weId && !e.completed);
+      if (remaining.length === 0) {
+        await handleFinish();
+      } else {
+        const nextWeId = remaining[0].weId;
+        requestAnimationFrame(() => {
+          exerciseRefs.current.get(nextWeId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+    } catch (err) {
+      show(err instanceof ClientApiError ? err.message : "Unable to complete exercise.", {
+        variant: "error",
+      });
+    } finally {
+      setCompletingId(null);
+    }
+  }
+
+  async function handleReopenExercise(weId: string) {
+    setExercises((prev) => prev.map((e) => (e.weId === weId ? { ...e, completed: false } : e)));
+    try {
+      await apiSend(`/api/workouts/${workout.id}/exercises/${weId}`, "PATCH", { completed: false });
+    } catch (err) {
+      setExercises((prev) => prev.map((e) => (e.weId === weId ? { ...e, completed: true } : e)));
+      show(err instanceof ClientApiError ? err.message : "Unable to reopen exercise.", {
+        variant: "error",
+      });
+    }
+  }
+
   async function confirmDeleteWorkout() {
     setDeleteWorkoutOpen(false);
     try {
@@ -296,7 +345,7 @@ export function ActiveWorkoutScreen({
               onBlur={() => saveWorkoutMeta({ name })}
               className="w-full truncate bg-transparent text-lg font-semibold text-ink focus:outline-none"
             />
-            <p className="text-xs font-medium text-ink-muted">{formatDuration(durationMs)}</p>
+            <p className="text-strength-muted text-xs font-medium">{formatDuration(durationMs)}</p>
           </div>
           {finishedAt ? (
             <button
@@ -332,29 +381,47 @@ export function ActiveWorkoutScreen({
 
         {!finishedAt && <RestTimerBar />}
 
-        {exercises.map((ex, index) => (
-          <ExerciseCard
-            key={ex.weId}
-            exerciseId={ex.exerciseId}
-            exerciseName={ex.exerciseName}
-            notes={ex.notes}
-            sets={ex.sets}
-            previousSets={previousMap[ex.exerciseId]?.sets ?? null}
-            units={units}
-            canReorder={exercises.length > 1}
-            isFirst={index === 0}
-            isLast={index === exercises.length - 1}
-            onSetChange={(setId, patch) => handleSetChange(ex.weId, setId, patch)}
-            onSetDelete={(setId) => handleDeleteSet(ex.weId, setId)}
-            onAddSet={() => handleAddSet(ex.weId)}
-            onRemoveExercise={() => setDeleteExerciseId(ex.weId)}
-            onNotesChange={(value) => {
-              updateExercise(ex.weId, { notes: value });
-            }}
-            onNotesBlur={() => handleExerciseNotesBlur(ex.weId)}
-            onMove={(direction) => handleMoveExercise(index, direction)}
-          />
-        ))}
+        {(() => {
+          const incompleteCount = exercises.filter((e) => !e.completed).length;
+          const firstIncompleteWeId = exercises.find((e) => !e.completed)?.weId;
+          return exercises.map((ex, index) => (
+            <div
+              key={ex.weId}
+              ref={(el) => {
+                if (el) exerciseRefs.current.set(ex.weId, el);
+                else exerciseRefs.current.delete(ex.weId);
+              }}
+            >
+              <ExerciseCard
+                exerciseId={ex.exerciseId}
+                exerciseName={ex.exerciseName}
+                notes={ex.notes}
+                sets={ex.sets}
+                previousSets={previousMap[ex.exerciseId]?.sets ?? null}
+                units={units}
+                canReorder={exercises.length > 1}
+                isFirst={index === 0}
+                isLast={index === exercises.length - 1}
+                completed={ex.completed}
+                workoutFinished={!!finishedAt}
+                isLastIncomplete={!ex.completed && incompleteCount === 1}
+                isCurrent={ex.weId === firstIncompleteWeId}
+                completing={completingId === ex.weId}
+                onSetChange={(setId, patch) => handleSetChange(ex.weId, setId, patch)}
+                onSetDelete={(setId) => handleDeleteSet(ex.weId, setId)}
+                onAddSet={() => handleAddSet(ex.weId)}
+                onRemoveExercise={() => setDeleteExerciseId(ex.weId)}
+                onNotesChange={(value) => {
+                  updateExercise(ex.weId, { notes: value });
+                }}
+                onNotesBlur={() => handleExerciseNotesBlur(ex.weId)}
+                onMove={(direction) => handleMoveExercise(index, direction)}
+                onComplete={() => handleCompleteExercise(ex.weId)}
+                onReopen={() => handleReopenExercise(ex.weId)}
+              />
+            </div>
+          ));
+        })()}
 
         <button
           onClick={() => setPickerOpen(true)}

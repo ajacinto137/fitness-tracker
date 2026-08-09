@@ -75,7 +75,7 @@ export function RestTimerBar() {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-accent-strong bg-surface p-3">
       <div
-        className="absolute inset-y-0 left-0 bg-accent-wash transition-all"
+        className="bg-gradient-primary absolute inset-y-0 left-0 opacity-25 transition-[width] duration-1000 ease-linear"
         style={{ width: `${Math.min(100, progress * 100)}%` }}
       />
       <div className="relative flex items-center justify-between">

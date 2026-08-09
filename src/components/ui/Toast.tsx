@@ -59,10 +59,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className="animate-fade-slide-up pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border border-border-strong bg-surface-2 px-4 py-3 shadow-xl"
+            className="bg-surface-elevated animate-fade-slide-up pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border border-border-strong px-4 py-3 shadow-xl"
           >
             {t.variant === "pr" && (
-              <Trophy className="mt-0.5 h-5 w-5 shrink-0 text-warning" aria-hidden />
+              <Trophy className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden />
             )}
             <div className="flex-1">
               <p

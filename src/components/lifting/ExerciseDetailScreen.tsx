@@ -7,13 +7,15 @@ import type { Exercise, PersonalRecordType, Units } from "@prisma/client";
 import { clsx } from "clsx";
 import { SubPageHeader } from "@/components/nav/SubPageHeader";
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { IconContainer } from "@/components/ui/IconContainer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ExerciseFormSheet, type ExerciseFormValues } from "@/components/lifting/ExerciseFormSheet";
 import { ProgressChart, type ChartPoint } from "@/components/charts/ProgressChart";
 import { TimeRangeTabs } from "@/components/charts/TimeRangeTabs";
 import { useToast } from "@/components/ui/Toast";
 import { apiSend, ClientApiError } from "@/lib/client-fetch";
-import { fromKg, roundWeight, unitLabel } from "@/lib/units";
+import { fromKg, formatWeight, roundWeight, unitLabel } from "@/lib/units";
 import { startDateForRange, type TimeRangeKey } from "@/lib/calculations";
 import { displayDate } from "@/lib/date";
 import { MUSCLE_GROUP_LABELS } from "@/lib/muscle-groups";
@@ -136,9 +138,7 @@ export function ExerciseDetailScreen({
       />
 
       <div className="space-y-6 px-5 py-5">
-        <span className="inline-block rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-ink-secondary">
-          {MUSCLE_GROUP_LABELS[exercise.muscleGroup]}
-        </span>
+        <Badge variant="strength">{MUSCLE_GROUP_LABELS[exercise.muscleGroup]}</Badge>
 
         <div className="grid grid-cols-2 gap-3">
           <StatCard
@@ -148,18 +148,19 @@ export function ExerciseDetailScreen({
           <StatCard
             label="Best Weight"
             value={
-              summary.currentBestWeightKg > 0
-                ? `${roundWeight(fromKg(summary.currentBestWeightKg, units))} ${unitLabel(units)}`
-                : "—"
+              summary.currentBestWeightKg > 0 ? formatWeight(summary.currentBestWeightKg, units) : "—"
             }
+            accent={summary.currentBestWeightKg > 0}
+            gradient
           />
           <StatCard
             label="Estimated 1RM"
             value={
               summary.currentBestOneRepMaxKg > 0
-                ? `${roundWeight(fromKg(summary.currentBestOneRepMaxKg, units))} ${unitLabel(units)}`
+                ? formatWeight(summary.currentBestOneRepMaxKg, units)
                 : "—"
             }
+            accent={summary.currentBestOneRepMaxKg > 0}
           />
           <StatCard
             label="Recent Volume"
@@ -179,7 +180,9 @@ export function ExerciseDetailScreen({
                 onClick={() => setMetric(m.key)}
                 className={clsx(
                   "flex-1 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
-                  metric === m.key ? "bg-accent-strong text-white" : "text-ink-secondary hover:text-ink"
+                  metric === m.key
+                    ? "bg-gradient-primary text-accent-ink"
+                    : "text-ink-secondary hover:text-ink"
                 )}
               >
                 {m.label}
@@ -188,7 +191,15 @@ export function ExerciseDetailScreen({
           </div>
           <ProgressChart
             data={chartData}
-            series={[{ dataKey: "value", label: METRICS.find((m) => m.key === metric)!.label, color: "var(--accent-soft)", style: "line" }]}
+            series={[
+              {
+                dataKey: "value",
+                label: METRICS.find((m) => m.key === metric)!.label,
+                color: "var(--strength)",
+                style: "line",
+                areaFill: true,
+              },
+            ]}
             valueFormatter={(v) => `${v} ${unitLabel(units)}`}
             repsKey={metric === "HEAVIEST_WEIGHT" ? "reps" : undefined}
             emptyMessage="Complete this exercise in a workout to see progress here."
@@ -203,17 +214,17 @@ export function ExerciseDetailScreen({
 
         {personalRecords.length > 0 && (
           <div className="space-y-2">
-            <h2 className="px-1 font-semibold text-ink">Personal Records</h2>
+            <h2 className="text-gold-soft px-1 font-semibold">Personal Records</h2>
             <div className="space-y-2">
               {personalRecords.map((pr) => (
-                <Card key={pr.id} className="flex items-center gap-3 py-3">
-                  <Trophy className="h-5 w-5 shrink-0 text-warning" />
-                  <div className="flex-1">
+                <Card key={pr.id} accent="achievement" className="flex items-center gap-3 py-3">
+                  <IconContainer icon={Trophy} category="achievement" size="sm" />
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium text-ink">{PR_LABELS[pr.type]}</p>
                     <p className="text-sm text-ink-secondary">{displayDate(pr.achievedAt, { year: "numeric" })}</p>
                   </div>
-                  <p className="font-semibold text-ink">
-                    {roundWeight(fromKg(pr.value, units))} {unitLabel(units)}
+                  <p className="font-semibold text-accent">
+                    {formatWeight(pr.value, units)}
                     {pr.reps ? ` × ${pr.reps}` : ""}
                   </p>
                 </Card>
@@ -264,11 +275,28 @@ export function ExerciseDetailScreen({
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({
+  label,
+  value,
+  accent,
+  gradient,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+  gradient?: boolean;
+}) {
   return (
     <Card className="py-3">
       <p className="text-xs font-medium text-ink-muted">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-ink">{value}</p>
+      <p
+        className={clsx(
+          "mt-1 text-lg font-semibold",
+          gradient && accent ? "text-gradient-strength" : accent ? "text-strength" : "text-ink"
+        )}
+      >
+        {value}
+      </p>
     </Card>
   );
 }

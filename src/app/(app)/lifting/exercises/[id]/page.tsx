@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { requireSessionUserId } from "@/lib/session";
+import { getUserSettings } from "@/lib/settings";
 import { getExerciseDetail } from "@/lib/exercise-detail";
 import { ExerciseDetailScreen } from "@/components/lifting/ExerciseDetailScreen";
 
@@ -10,12 +10,11 @@ export default async function ExerciseDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const session = await auth();
-  const userId = session!.user.id;
+  const userId = await requireSessionUserId();
 
   const [detail, settings] = await Promise.all([
     getExerciseDetail(userId, id),
-    prisma.userSettings.upsert({ where: { userId }, update: {}, create: { userId } }),
+    getUserSettings(userId),
   ]);
 
   if (!detail) notFound();

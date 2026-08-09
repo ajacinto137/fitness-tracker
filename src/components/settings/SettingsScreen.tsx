@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { LogOut, Download } from "lucide-react";
+import { LogOut, Download, Check } from "lucide-react";
 import type { Units } from "@prisma/client";
 import { SubPageHeader } from "@/components/nav/SubPageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
+import { useTheme } from "@/components/theme/ThemeProvider";
 import { apiSend, ClientApiError } from "@/lib/client-fetch";
+import { COLOR_SCHEMES, COLOR_SCHEME_META } from "@/lib/color-schemes";
 import { clsx } from "clsx";
 
 export function SettingsScreen({
@@ -24,6 +26,7 @@ export function SettingsScreen({
   initialUnits: Units;
 }) {
   const { show } = useToast();
+  const { scheme, setScheme } = useTheme();
   const [name, setName] = useState(initialName);
   const [units, setUnits] = useState<Units>(initialUnits);
   const [savingName, setSavingName] = useState(false);
@@ -84,12 +87,51 @@ export function SettingsScreen({
                 onClick={() => changeUnits(u)}
                 className={clsx(
                   "flex-1 rounded-xl py-2.5 text-sm font-semibold transition-colors",
-                  units === u ? "bg-accent-strong text-white" : "text-ink-secondary hover:text-ink"
+                  units === u ? "bg-gradient-primary text-accent-ink" : "text-ink-secondary hover:text-ink"
                 )}
               >
                 {u === "LB" ? "Pounds (lb)" : "Kilograms (kg)"}
               </button>
             ))}
+          </Card>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="px-1 text-sm font-semibold text-ink-secondary">Appearance</h2>
+          <Card className="space-y-2 p-3">
+            <p className="px-1 text-xs text-ink-muted">Color Scheme</p>
+            <div className="grid grid-cols-1 gap-2">
+              {COLOR_SCHEMES.map((s) => {
+                const meta = COLOR_SCHEME_META[s];
+                const selected = s === scheme;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setScheme(s)}
+                    aria-pressed={selected}
+                    className={clsx(
+                      "flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                      selected ? "border-accent bg-surface-hover" : "border-border-strong hover:bg-surface-hover"
+                    )}
+                  >
+                    <span
+                      className="h-9 w-9 shrink-0 rounded-full"
+                      style={{ backgroundImage: meta.preview }}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-ink">{meta.label}</span>
+                      <span className="block truncate text-xs text-ink-muted">{meta.description}</span>
+                    </span>
+                    {selected && (
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-accent-ink">
+                        <Check className="h-3.5 w-3.5" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </Card>
         </section>
 

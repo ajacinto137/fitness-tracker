@@ -3,36 +3,224 @@
 :root {
   color-scheme: dark;
 
-  /* Surfaces — dark charcoal, never pure black */
-  --app: #14161b;
-  --surface: #1c1f26;
-  --surface-2: #262b35;
-  --surface-hover: #2d323d;
+  /* Surfaces — near-black, premium dark foundation */
+  --app: #0a0a0b;
+  --surface: #151517;
+  --surface-2: #1d1d20;
+  --surface-hover: #26262a;
 
   /* Borders */
-  --border: #2c303a;
-  --border-strong: #40465370;
+  --border: #29292d;
+  --border-strong: #3a3a4070;
 
   /* Text */
-  --ink: #f5f6f8;
-  --ink-secondary: #aeb4c0;
-  --ink-muted: #82899a;
-  --ink-disabled: #5c626f;
+  --ink: #f5f5f5;
+  --ink-secondary: #9a9aa0;
+  --ink-muted: #75757c;
+  --ink-disabled: #55555c;
 
-  /* Accent — single tasteful accent used throughout */
-  --accent: #6366f1;
-  --accent-strong: #4f46e5;
-  --accent-soft: #a5b4fc;
-  --accent-wash: #6366f126;
+  /* Accent — the primary neon CTA/nav color. Overridden per color scheme
+     (see [data-scheme] blocks below); these are the "Vibrant" defaults. */
+  --accent: #2f8fff;
+  --accent-strong: #1c6fe0;
+  --accent-soft: #8fc4ff;
+  --accent-wash: #2f8fff29;
+  /* Text color placed on top of solid accent fills — flips between white
+     and near-black per scheme depending on how light the accent is. */
+  --accent-ink: #ffffff;
 
-  /* Status */
-  --danger: #f87171;
-  --danger-strong: #ef4444;
-  --success: #34d399;
+  /* Status — fixed across every color scheme. Error/warning meaning must
+     stay recognizable regardless of the chosen neon theme. */
+  --danger: #fb7185;
+  --danger-strong: #f43f5e;
   --warning: #fbbf24;
+
+  /* Category accents — Strength/Weight/Progress carry each scheme's neon
+     personality. Never used for primary CTAs by default. */
+  --strength: #8b7cff;
+  --strength-strong: #5b3df5;
+  --strength-soft: #c7bfff;
+  --strength-wash: #8b7cff1f;
+
+  --weight: #00d4ff;
+  --weight-strong: #0ea5e9;
+  --weight-soft: #a5f3fc;
+  --weight-wash: #00d4ff1f;
+
+  --success: #34f5c5;
+  --success-strong: #10b981;
+  --success-wash: #34f5c522;
+
+  /* Nutrition token — defined for design-system completeness; no
+     nutrition/calorie feature exists in the app yet, so nothing consumes
+     this today. */
+  --nutrition: #ffb020;
+  --nutrition-strong: #ff7a00;
+  --nutrition-soft: #ffdda0;
+  --nutrition-wash: #ffb0201f;
+
+  /* Gold/PR — intentionally constant across every color scheme (see
+     [data-scheme] blocks: it's never redefined there). Achievements read
+     as "gold" the same way regardless of which neon theme is active,
+     the way a trophy doesn't change color with the rest of a room. */
+  --gold: #ffd60a;
+  --gold-soft: #fff3a0;
+  --gold-wash: #ffd60a1f;
+
+  /* Gradients — two-stop, same-family, used as accents (buttons, icon
+     containers, badges, chart fills, progress bars) rather than full
+     backgrounds. Strength/Weight/Success shift with the color scheme;
+     achievement stays gold/lime to match --gold above. */
+  --gradient-primary: linear-gradient(135deg, #00e1ff 0%, var(--accent) 100%);
+  --gradient-strength: linear-gradient(135deg, var(--accent) 0%, var(--strength-strong) 100%);
+  --gradient-weight: linear-gradient(135deg, #00e1ff 0%, var(--weight-strong) 100%);
+  --gradient-success: linear-gradient(135deg, #6effc8 0%, var(--success-strong) 100%);
+  --gradient-achievement: linear-gradient(135deg, #b8ff3d 0%, var(--gold) 100%);
+  --gradient-nutrition: linear-gradient(135deg, var(--gold) 0%, var(--nutrition-strong) 100%);
+
+  /* Glow — tight, controlled box-shadow colors for buttons, active nav,
+     PR badges, and progress bar fills. Never used for large blurry halos. */
+  --glow-primary: #2f8fff80;
+  --glow-strength: #8b5cf680;
+  --glow-weight: #00d4ff80;
+  --glow-success: #34f5c573;
+  --glow-gold: #ffd60a73;
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/* ---- Color schemes ---------------------------------------------------
+   Selecting a scheme in Settings sets data-scheme on the app shell; these
+   blocks override the role tokens above. Surfaces/borders/danger/warning/
+   gold stay constant — only the neon "personality" tokens change. */
+
+[data-scheme="neon-lime"] {
+  --accent: #b8ff3d;
+  --accent-strong: #97e62b;
+  --accent-soft: #dfff9e;
+  --accent-wash: #b8ff3d29;
+  --accent-ink: #0a0a0b;
+
+  --strength: #34e4b6;
+  --strength-strong: #14b891;
+  --strength-soft: #affce6;
+  --strength-wash: #34e4b61f;
+
+  --weight: #22d3ee;
+  --weight-strong: #0891b2;
+  --weight-soft: #a5f3fc;
+  --weight-wash: #22d3ee1f;
+
+  --success: #6ee7b7;
+  --success-strong: #10b981;
+  --success-wash: #6ee7b722;
+
+  --gradient-primary: linear-gradient(135deg, var(--accent) 0%, var(--strength) 100%);
+  --gradient-strength: linear-gradient(135deg, var(--strength) 0%, var(--weight) 100%);
+  --gradient-weight: linear-gradient(135deg, var(--weight) 0%, #38bdf8 100%);
+  --gradient-success: linear-gradient(135deg, var(--success) 0%, var(--weight) 100%);
+
+  --glow-primary: #b8ff3d80;
+  --glow-strength: #34e4b680;
+  --glow-weight: #22d3ee80;
+  --glow-success: #6ee7b773;
+}
+
+[data-scheme="electric-ocean"] {
+  --accent: #00c2ff;
+  --accent-strong: #0090d9;
+  --accent-soft: #92e6ff;
+  --accent-wash: #00c2ff29;
+  --accent-ink: #071019;
+
+  --strength: #4c6fff;
+  --strength-strong: #2f4fe0;
+  --strength-soft: #b7c6ff;
+  --strength-wash: #4c6fff1f;
+
+  --weight: #22d3ee;
+  --weight-strong: #0ea5e9;
+  --weight-soft: #a5f3fc;
+  --weight-wash: #22d3ee1f;
+
+  --success: #34e4b6;
+  --success-strong: #0fbf9f;
+  --success-wash: #34e4b622;
+
+  --gradient-primary: linear-gradient(135deg, var(--accent) 0%, var(--strength) 100%);
+  --gradient-strength: linear-gradient(135deg, var(--strength) 0%, #4338ca 100%);
+  --gradient-weight: linear-gradient(135deg, #00e1ff 0%, var(--accent) 100%);
+  --gradient-success: linear-gradient(135deg, var(--success) 0%, var(--weight) 100%);
+
+  --glow-primary: #00c2ff80;
+  --glow-strength: #4c6fff80;
+  --glow-weight: #22d3ee80;
+  --glow-success: #34e4b673;
+}
+
+[data-scheme="neon-sunset"] {
+  --accent: #ff7a00;
+  --accent-strong: #e85d00;
+  --accent-soft: #ffc38a;
+  --accent-wash: #ff7a0029;
+  --accent-ink: #ffffff;
+
+  --strength: #ff3d77;
+  --strength-strong: #e0195c;
+  --strength-soft: #ffb8cf;
+  --strength-wash: #ff3d771f;
+
+  --weight: #ffd60a;
+  --weight-strong: #ffb020;
+  --weight-soft: #ffe99b;
+  --weight-wash: #ffd60a1f;
+
+  --success: #ff6b4a;
+  --success-strong: #e8431e;
+  --success-wash: #ff6b4a22;
+
+  --gradient-primary: linear-gradient(135deg, var(--weight) 0%, var(--accent) 100%);
+  --gradient-strength: linear-gradient(135deg, var(--success) 0%, var(--strength) 100%);
+  --gradient-weight: linear-gradient(135deg, var(--weight) 0%, var(--accent) 100%);
+  --gradient-success: linear-gradient(135deg, var(--success) 0%, var(--weight-strong) 100%);
+
+  --glow-primary: #ff7a0080;
+  --glow-strength: #ff3d7780;
+  --glow-weight: #ffd60a80;
+  --glow-success: #ff6b4a73;
+}
+
+[data-scheme="ultraviolet"] {
+  --accent: #8b5cf6;
+  --accent-strong: #7c3aed;
+  --accent-soft: #d8ccff;
+  --accent-wash: #8b5cf629;
+  --accent-ink: #ffffff;
+
+  --strength: #4c6fff;
+  --strength-strong: #2f4fe0;
+  --strength-soft: #b7c6ff;
+  --strength-wash: #4c6fff1f;
+
+  --weight: #c026d3;
+  --weight-strong: #a21caf;
+  --weight-soft: #f0abfc;
+  --weight-wash: #c026d31f;
+
+  --success: #a78bfa;
+  --success-strong: #8b67f0;
+  --success-wash: #a78bfa22;
+
+  --gradient-primary: linear-gradient(135deg, var(--strength) 0%, var(--accent) 100%);
+  --gradient-strength: linear-gradient(135deg, var(--strength) 0%, var(--accent) 100%);
+  --gradient-weight: linear-gradient(135deg, var(--accent) 0%, var(--weight) 100%);
+  --gradient-success: linear-gradient(135deg, var(--success) 0%, var(--accent) 100%);
+
+  --glow-primary: #8b5cf680;
+  --glow-strength: #4c6fff80;
+  --glow-weight: #c026d380;
+  --glow-success: #a78bfa73;
 }
 
 @theme inline {
@@ -53,11 +241,33 @@
   --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
   --color-accent-wash: var(--accent-wash);
+  --color-accent-ink: var(--accent-ink);
 
   --color-danger: var(--danger);
   --color-danger-strong: var(--danger-strong);
   --color-success: var(--success);
+  --color-success-strong: var(--success-strong);
+  --color-success-wash: var(--success-wash);
   --color-warning: var(--warning);
+
+  --color-strength: var(--strength);
+  --color-strength-strong: var(--strength-strong);
+  --color-strength-soft: var(--strength-soft);
+  --color-strength-wash: var(--strength-wash);
+
+  --color-weight: var(--weight);
+  --color-weight-strong: var(--weight-strong);
+  --color-weight-soft: var(--weight-soft);
+  --color-weight-wash: var(--weight-wash);
+
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-wash: var(--gold-wash);
+
+  --color-nutrition: var(--nutrition);
+  --color-nutrition-strong: var(--nutrition-strong);
+  --color-nutrition-soft: var(--nutrition-soft);
+  --color-nutrition-wash: var(--nutrition-wash);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
@@ -81,6 +291,112 @@ body {
 
 ::selection {
   background: var(--accent-wash);
+}
+
+/* Reusable gradient fills — apply as a background-image so gradients stay
+   centrally defined in :root instead of repeated inline in components */
+.bg-gradient-primary {
+  background-image: var(--gradient-primary);
+}
+.bg-gradient-strength {
+  background-image: var(--gradient-strength);
+}
+.bg-gradient-weight {
+  background-image: var(--gradient-weight);
+}
+.bg-gradient-success {
+  background-image: var(--gradient-success);
+}
+.bg-gradient-achievement {
+  background-image: var(--gradient-achievement);
+}
+.bg-gradient-nutrition {
+  background-image: var(--gradient-nutrition);
+}
+
+/* Tight, controlled glows — small box-shadows for buttons, active nav,
+   PR badges, and progress bar fills. Never large blurry halos. */
+.glow-primary {
+  box-shadow: 0 0 14px 0 var(--glow-primary);
+}
+.glow-strength {
+  box-shadow: 0 0 14px 0 var(--glow-strength);
+}
+.glow-weight {
+  box-shadow: 0 0 14px 0 var(--glow-weight);
+}
+.glow-success {
+  box-shadow: 0 0 14px 0 var(--glow-success);
+}
+.glow-gold {
+  box-shadow: 0 0 14px 0 var(--glow-gold);
+}
+
+/* Muted category text — a category hue blended toward the neutral muted
+   gray, for secondary text (dates, metadata, counts) that should carry a
+   little color without competing with the primary value it supports. */
+.text-strength-muted {
+  color: color-mix(in srgb, var(--strength) 55%, var(--ink-muted));
+}
+.text-weight-muted {
+  color: color-mix(in srgb, var(--weight) 55%, var(--ink-muted));
+}
+.text-success-muted {
+  color: color-mix(in srgb, var(--success) 55%, var(--ink-muted));
+}
+.text-accent-muted {
+  color: color-mix(in srgb, var(--accent) 55%, var(--ink-muted));
+}
+.text-gold-muted {
+  color: color-mix(in srgb, var(--gold) 55%, var(--ink-muted));
+}
+
+/* Gradient text — reserved for important standalone metrics (current
+   weight, PR values, major stat numbers). Not for headings, paragraphs, or
+   every card title. */
+.text-gradient-primary,
+.text-gradient-strength,
+.text-gradient-weight,
+.text-gradient-success,
+.text-gradient-achievement {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-gradient-primary {
+  background-image: var(--gradient-primary);
+}
+.text-gradient-strength {
+  background-image: var(--gradient-strength);
+}
+.text-gradient-success {
+  background-image: var(--gradient-success);
+}
+.text-gradient-weight {
+  background-image: var(--gradient-weight);
+}
+.text-gradient-achievement {
+  background-image: var(--gradient-achievement);
+}
+
+/* Elevated surface — one step lighter than --surface-2, for sheets/modals
+   and cards that need to visually sit above the rest of the page */
+.bg-surface-elevated {
+  background-color: var(--surface-2);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
+    0 8px 24px -8px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 input::placeholder,
@@ -130,4 +446,22 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 .animate-sheet-up {
   animation: sheet-up 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes check-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.animate-check-pop {
+  animation: check-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

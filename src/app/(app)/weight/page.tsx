@@ -1,14 +1,14 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireSessionUserId } from "@/lib/session";
+import { getUserSettings } from "@/lib/settings";
 import { WeightScreen } from "@/components/weight/WeightScreen";
 
 export default async function WeightPage() {
-  const session = await auth();
-  const userId = session!.user.id;
+  const userId = await requireSessionUserId();
 
   const [entries, settings] = await Promise.all([
     prisma.bodyWeightEntry.findMany({ where: { userId }, orderBy: { date: "asc" } }),
-    prisma.userSettings.upsert({ where: { userId }, update: {}, create: { userId } }),
+    getUserSettings(userId),
   ]);
 
   const initialEntries = entries.map((e) => ({

@@ -20,3 +20,8 @@ export function roundWeight(value: number): number {
 export function unitLabel(units: Units): string {
   return units === "LB" ? "lb" : "kg";
 }
+
+/** Convert + round + label a weight stored in kg for display, in one call. */
+export function formatWeight(kg: number, units: Units): string {
+  return `${roundWeight(fromKg(kg, units))} ${unitLabel(units)}`;
+}

@@ -15,6 +15,14 @@ enum Units {
   KG
 }
 
+enum ColorScheme {
+  VIBRANT
+  NEON_LIME
+  ELECTRIC_OCEAN
+  NEON_SUNSET
+  ULTRAVIOLET
+}
+
 enum MuscleGroup {
   CHEST
   BACK
@@ -50,12 +58,13 @@ model User {
 }
 
 model UserSettings {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  units     Units    @default(LB)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String      @id @default(cuid())
+  userId      String      @unique
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  units       Units       @default(LB)
+  colorScheme ColorScheme @default(VIBRANT)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model BodyWeightEntry {
@@ -144,6 +153,7 @@ model WorkoutExercise {
   exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
   order      Int
   notes      String?
+  completed  Boolean  @default(false)
 
   sets WorkoutSet[]
 
