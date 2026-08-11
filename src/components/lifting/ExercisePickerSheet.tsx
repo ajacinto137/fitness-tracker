@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import type { Exercise } from "@prisma/client";
 import { Sheet } from "@/components/ui/Sheet";
 import { MUSCLE_GROUP_LABELS } from "@/lib/muscle-groups";
@@ -12,6 +12,8 @@ interface ExercisePickerSheetProps {
   excludeIds?: string[];
   onClose: () => void;
   onSelect: (exercise: Exercise) => void;
+  /** When provided, shows a "Create New Exercise" action above the results. */
+  onCreateNew?: () => void;
 }
 
 export function ExercisePickerSheet({
@@ -20,6 +22,7 @@ export function ExercisePickerSheet({
   excludeIds = [],
   onClose,
   onSelect,
+  onCreateNew,
 }: ExercisePickerSheetProps) {
   const [search, setSearch] = useState("");
 
@@ -43,6 +46,17 @@ export function ExercisePickerSheet({
           className="h-11 w-full rounded-xl border border-border-strong bg-surface px-4 pl-10 text-base text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-wash"
         />
       </div>
+      {onCreateNew && (
+        <button
+          onClick={onCreateNew}
+          className="mb-3 flex w-full items-center gap-2.5 rounded-xl border border-dashed border-border-strong px-3 py-3 text-left text-accent hover:bg-surface"
+        >
+          <span className="bg-gradient-primary flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-accent-ink">
+            <Plus className="h-4 w-4" />
+          </span>
+          <span className="font-semibold">Create New Exercise</span>
+        </button>
+      )}
       {filtered.length === 0 ? (
         <p className="py-6 text-center text-sm text-ink-muted">
           {exercises.length === 0 ? "Add exercises to your library first." : "No exercises match."}

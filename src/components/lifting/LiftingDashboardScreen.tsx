@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Play, ChevronRight, Trophy } from "lucide-react";
+import { Play, ChevronRight, Trophy, Plus } from "lucide-react";
 import type { Exercise, PersonalRecordType, Prisma, Workout } from "@prisma/client";
 import { TopBar } from "@/components/nav/TopBar";
 import { Card } from "@/components/ui/Card";
@@ -12,6 +12,9 @@ import { Badge } from "@/components/ui/Badge";
 import { IconContainer } from "@/components/ui/IconContainer";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StartWorkoutSheet } from "@/components/lifting/StartWorkoutSheet";
+import { ExerciseFormSheet, type ExerciseFormValues } from "@/components/lifting/ExerciseFormSheet";
+import { useToast } from "@/components/ui/Toast";
+import { createExercise } from "@/lib/exercises-client";
 import { displayDate } from "@/lib/date";
 import { MUSCLE_GROUP_LABELS } from "@/lib/muscle-groups";
 
@@ -49,7 +52,14 @@ export function LiftingDashboardScreen({
   recentPR: { exerciseName: string; type: PersonalRecordType; value: number; achievedAt: string } | null;
 }) {
   const router = useRouter();
+  const { show } = useToast();
   const [startOpen, setStartOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  async function handleCreateExercise(values: ExerciseFormValues) {
+    const exercise = await createExercise(values);
+    show(`${exercise.name} added to your exercise library.`);
+  }
 
   return (
     <div>
@@ -144,7 +154,19 @@ export function LiftingDashboardScreen({
           )}
         </Section>
 
-        <Section title="Recent Exercises" href="/lifting/exercises">
+        <Section
+          title="Recent Exercises"
+          href="/lifting/exercises"
+          action={
+            <button
+              onClick={() => setCreateOpen(true)}
+              aria-label="Create exercise"
+              className="bg-gradient-primary flex h-8 w-8 items-center justify-center rounded-full text-accent-ink"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          }
+        >
           {recentExercises.length === 0 ? (
             <p className="py-2 text-sm text-ink-muted">Your recently performed exercises will show here.</p>
           ) : (
@@ -163,6 +185,7 @@ export function LiftingDashboardScreen({
       </div>
 
       <StartWorkoutSheet open={startOpen} routines={routines} onClose={() => setStartOpen(false)} />
+      <ExerciseFormSheet open={createOpen} onClose={() => setCreateOpen(false)} onSubmit={handleCreateExercise} />
     </div>
   );
 }
@@ -170,15 +193,17 @@ export function LiftingDashboardScreen({
 function Section({
   title,
   href,
+  action,
   children,
 }: {
   title: string;
   href: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section className="space-y-2">
-      <SectionHeader title={title} href={href} category="strength" />
+      <SectionHeader title={title} href={href} category="strength" action={action} />
       {children}
     </section>
   );

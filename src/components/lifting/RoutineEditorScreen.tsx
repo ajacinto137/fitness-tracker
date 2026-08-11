@@ -10,8 +10,10 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ExercisePickerSheet } from "@/components/lifting/ExercisePickerSheet";
+import { ExerciseFormSheet, type ExerciseFormValues } from "@/components/lifting/ExerciseFormSheet";
 import { useToast } from "@/components/ui/Toast";
 import { apiSend, ClientApiError } from "@/lib/client-fetch";
+import { createExercise } from "@/lib/exercises-client";
 
 type RoutineWithExercises = Prisma.WorkoutRoutineGetPayload<{
   include: { exercises: { include: { exercise: true } } };
@@ -44,7 +46,9 @@ export function RoutineEditorScreen({
         targetReps: re.targetReps?.toString() ?? "10",
       })) ?? []
   );
+  const [exerciseLibrary, setExerciseLibrary] = useState(availableExercises);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -55,6 +59,13 @@ export function RoutineEditorScreen({
       { exerciseId: exercise.id, name: exercise.name, targetSets: "3", targetReps: "10" },
     ]);
     setPickerOpen(false);
+  }
+
+  async function handleCreateExercise(values: ExerciseFormValues) {
+    const exercise = await createExercise(values);
+    setExerciseLibrary((prev) => [...prev, exercise].sort((a, b) => a.name.localeCompare(b.name)));
+    addExercise(exercise);
+    show(`${exercise.name} created and added to routine.`);
   }
 
   function removeRow(index: number) {
@@ -226,10 +237,16 @@ export function RoutineEditorScreen({
 
       <ExercisePickerSheet
         open={pickerOpen}
-        exercises={availableExercises}
+        exercises={exerciseLibrary}
         onClose={() => setPickerOpen(false)}
         onSelect={addExercise}
+        onCreateNew={() => {
+          setPickerOpen(false);
+          setCreateOpen(true);
+        }}
       />
+
+      <ExerciseFormSheet open={createOpen} onClose={() => setCreateOpen(false)} onSubmit={handleCreateExercise} />
 
       {routine && (
         <ConfirmDialog

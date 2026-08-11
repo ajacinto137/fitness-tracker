@@ -9,10 +9,12 @@ import { Textarea } from "@/components/ui/Input";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ExerciseCard } from "@/components/lifting/ExerciseCard";
 import { ExercisePickerSheet } from "@/components/lifting/ExercisePickerSheet";
+import { ExerciseFormSheet, type ExerciseFormValues } from "@/components/lifting/ExerciseFormSheet";
 import { RestTimerBar } from "@/components/lifting/RestTimerBar";
 import { FinishSummarySheet, type WorkoutSummary } from "@/components/lifting/FinishSummarySheet";
 import { useToast } from "@/components/ui/Toast";
 import { apiSend, ClientApiError } from "@/lib/client-fetch";
+import { createExercise } from "@/lib/exercises-client";
 import { fromKg, roundWeight, formatWeight } from "@/lib/units";
 import { formatDuration } from "@/lib/duration";
 import type { SetRowData } from "@/components/lifting/SetRow";
@@ -94,7 +96,9 @@ export function ActiveWorkoutScreen({
   const [completingId, setCompletingId] = useState<string | null>(null);
   const exerciseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [previousMap, setPreviousMap] = useState(previousByExercise);
+  const [exerciseLibrary, setExerciseLibrary] = useState(availableExercises);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [deleteExerciseId, setDeleteExerciseId] = useState<string | null>(null);
   const [deleteWorkoutOpen, setDeleteWorkoutOpen] = useState(false);
   const [summary, setSummary] = useState<WorkoutSummary | null>(null);
@@ -222,6 +226,13 @@ export function ActiveWorkoutScreen({
     } catch (err) {
       show(err instanceof ClientApiError ? err.message : "Unable to add exercise.", { variant: "error" });
     }
+  }
+
+  async function handleCreateExercise(values: ExerciseFormValues) {
+    const exercise = await createExercise(values);
+    setExerciseLibrary((prev) => [...prev, exercise].sort((a, b) => a.name.localeCompare(b.name)));
+    await handleAddExercise(exercise);
+    show(`${exercise.name} created and added to workout.`);
   }
 
   async function confirmRemoveExercise() {
@@ -433,10 +444,16 @@ export function ActiveWorkoutScreen({
 
       <ExercisePickerSheet
         open={pickerOpen}
-        exercises={availableExercises}
+        exercises={exerciseLibrary}
         onClose={() => setPickerOpen(false)}
         onSelect={handleAddExercise}
+        onCreateNew={() => {
+          setPickerOpen(false);
+          setCreateOpen(true);
+        }}
       />
+
+      <ExerciseFormSheet open={createOpen} onClose={() => setCreateOpen(false)} onSubmit={handleCreateExercise} />
 
       <ConfirmDialog
         open={!!deleteExerciseId}

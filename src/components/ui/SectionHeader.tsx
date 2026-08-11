@@ -15,22 +15,28 @@ export function SectionHeader({
   href,
   seeAllLabel = "See all",
   category,
+  action,
 }: {
   title: string;
   href?: string;
   seeAllLabel?: string;
   category?: HeadingCategory;
+  /** Optional control (e.g. a "create" button) rendered before the "See all" link. */
+  action?: React.ReactNode;
 }) {
   return (
     <div className="flex items-center justify-between px-1">
       <h2 className={clsx("font-semibold", category ? headingColorClass[category] : "text-ink")}>
         {title}
       </h2>
-      {href && (
-        <Link href={href} className="text-sm font-medium text-accent">
-          {seeAllLabel}
-        </Link>
-      )}
+      <div className="flex items-center gap-3">
+        {action}
+        {href && (
+          <Link href={href} className="text-sm font-medium text-accent">
+            {seeAllLabel}
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

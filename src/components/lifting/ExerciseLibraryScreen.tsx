@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ExerciseFormSheet, type ExerciseFormValues } from "@/components/lifting/ExerciseFormSheet";
-import { apiSend, ClientApiError } from "@/lib/client-fetch";
+import { createExercise } from "@/lib/exercises-client";
 import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS } from "@/lib/muscle-groups";
 
 export function ExerciseLibraryScreen({ initialExercises }: { initialExercises: Exercise[] }) {
@@ -27,13 +27,9 @@ export function ExerciseLibraryScreen({ initialExercises }: { initialExercises: 
     });
   }, [exercises, search, filter]);
 
-  async function createExercise(values: ExerciseFormValues) {
-    try {
-      const { exercise } = await apiSend<{ exercise: Exercise }>("/api/exercises", "POST", values);
-      setExercises((prev) => [...prev, exercise].sort((a, b) => a.name.localeCompare(b.name)));
-    } catch (err) {
-      throw new Error(err instanceof ClientApiError ? err.message : "Unable to create exercise.");
-    }
+  async function handleCreateExercise(values: ExerciseFormValues) {
+    const exercise = await createExercise(values);
+    setExercises((prev) => [...prev, exercise].sort((a, b) => a.name.localeCompare(b.name)));
   }
 
   return (
@@ -100,7 +96,7 @@ export function ExerciseLibraryScreen({ initialExercises }: { initialExercises: 
         )}
       </div>
 
-      <ExerciseFormSheet open={sheetOpen} onClose={() => setSheetOpen(false)} onSubmit={createExercise} />
+      <ExerciseFormSheet open={sheetOpen} onClose={() => setSheetOpen(false)} onSubmit={handleCreateExercise} />
     </div>
   );
 }
