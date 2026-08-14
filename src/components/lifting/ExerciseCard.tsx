@@ -76,7 +76,7 @@ export function ExerciseCard({
       elevated={highlighted}
       className={clsx("space-y-3 transition-opacity", locked && "opacity-75")}
     >
-      {locked && <div className="absolute inset-0 bg-success-wash" aria-hidden />}
+      {locked && <div className="pointer-events-none absolute inset-0 bg-success-wash" aria-hidden />}
       <div className="relative flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <Link
