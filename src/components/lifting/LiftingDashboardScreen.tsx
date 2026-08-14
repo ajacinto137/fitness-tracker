@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/Badge";
 import { IconContainer } from "@/components/ui/IconContainer";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StartWorkoutSheet } from "@/components/lifting/StartWorkoutSheet";
+import { WorkoutCalendar } from "@/components/lifting/WorkoutCalendar";
 import { ExerciseFormSheet, type ExerciseFormValues } from "@/components/lifting/ExerciseFormSheet";
 import { useToast } from "@/components/ui/Toast";
 import { createExercise } from "@/lib/exercises-client";
@@ -43,6 +44,7 @@ export function LiftingDashboardScreen({
   recentExercises,
   workoutsThisWeek,
   recentPR,
+  workoutDates,
 }: {
   activeWorkout: Workout | null;
   recentWorkouts: RecentWorkout[];
@@ -50,6 +52,7 @@ export function LiftingDashboardScreen({
   recentExercises: Exercise[];
   workoutsThisWeek: number;
   recentPR: { exerciseName: string; type: PersonalRecordType; value: number; achievedAt: string } | null;
+  workoutDates: string[];
 }) {
   const router = useRouter();
   const { show } = useToast();
@@ -95,6 +98,8 @@ export function LiftingDashboardScreen({
             </p>
           </Card>
         </div>
+
+        <WorkoutCalendar workoutDates={workoutDates} />
 
         {recentPR && (
           <Card accent="achievement" className="flex items-center gap-3">

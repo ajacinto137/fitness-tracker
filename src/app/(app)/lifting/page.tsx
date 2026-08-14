@@ -14,8 +14,18 @@ function startOfWeek(date: Date) {
 export default async function LiftingDashboardPage() {
   const userId = await requireSessionUserId();
 
-  const [activeWorkout, recentWorkouts, routines, recentWorkoutExercises, workoutsThisWeek, recentPR] =
-    await Promise.all([
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+  const [
+    activeWorkout,
+    recentWorkouts,
+    routines,
+    recentWorkoutExercises,
+    workoutsThisWeek,
+    recentPR,
+    workoutsForCalendar,
+  ] = await Promise.all([
       prisma.workout.findFirst({
         where: { userId, finishedAt: null },
         orderBy: { startedAt: "desc" },
@@ -46,6 +56,10 @@ export default async function LiftingDashboardPage() {
         orderBy: { achievedAt: "desc" },
         include: { exercise: true },
       }),
+      prisma.workout.findMany({
+        where: { userId, startedAt: { gte: oneYearAgo } },
+        select: { startedAt: true },
+      }),
     ]);
 
   const seen = new Set<string>();
@@ -70,6 +84,7 @@ export default async function LiftingDashboardPage() {
       routines={routines}
       recentExercises={recentExercises}
       workoutsThisWeek={workoutsThisWeek}
+      workoutDates={workoutsForCalendar.map((w) => w.startedAt.toISOString())}
       recentPR={
         recentPR
           ? {
