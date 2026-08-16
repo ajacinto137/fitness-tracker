@@ -48,6 +48,7 @@ export default async function WorkoutPage({ params }: { params: Promise<{ id: st
       previousByExercise={previousByExercise}
       availableExercises={exercises}
       units={settings.units}
+      initialSummary={detail.summary}
     />
   );
 }

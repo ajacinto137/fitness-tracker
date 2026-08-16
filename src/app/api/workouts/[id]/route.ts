@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUserId, withErrorHandling, ApiError } from "@/lib/api";
-import { detectAndRecordPersonalRecords } from "@/lib/workout-service";
+import { computeWorkoutSummary, detectAndRecordPersonalRecords } from "@/lib/workout-service";
 import { getWorkoutDetail } from "@/lib/workout-detail";
-import { totalVolume } from "@/lib/calculations";
 
 async function assertOwnership(userId: string, id: string) {
   const workout = await prisma.workout.findUnique({ where: { id } });
@@ -28,6 +27,8 @@ const updateSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
   notes: z.string().trim().max(2000).optional().nullable(),
   finish: z.boolean().optional(),
+  startedAt: z.string().datetime().optional(),
+  finishedAt: z.string().datetime().optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -41,12 +42,31 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const shouldFinish = data.finish && !existing.finishedAt;
 
+    if (data.finishedAt !== undefined && !existing.finishedAt && !shouldFinish) {
+      throw new ApiError(400, "Finish the workout before editing its finish time.");
+    }
+
+    const nextStartedAt = data.startedAt ? new Date(data.startedAt) : existing.startedAt;
+    const nextFinishedAt = shouldFinish
+      ? new Date()
+      : data.finishedAt !== undefined
+        ? new Date(data.finishedAt)
+        : existing.finishedAt;
+
+    if (nextFinishedAt && nextStartedAt > nextFinishedAt) {
+      throw new ApiError(400, "Start time must be before finish time.");
+    }
+    if (nextStartedAt.getTime() > Date.now()) {
+      throw new ApiError(400, "Start time can't be in the future.");
+    }
+
     await prisma.workout.update({
       where: { id },
       data: {
         ...(data.name !== undefined ? { name: data.name } : {}),
         ...(data.notes !== undefined ? { notes: data.notes } : {}),
-        ...(shouldFinish ? { finishedAt: new Date() } : {}),
+        ...(data.startedAt !== undefined ? { startedAt: nextStartedAt } : {}),
+        ...(shouldFinish || data.finishedAt !== undefined ? { finishedAt: nextFinishedAt } : {}),
       },
     });
 
@@ -63,21 +83,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
     if (!workout) throw new ApiError(404, "Workout not found.");
 
-    const allSets = workout.exercises.flatMap((e) => e.sets);
-    const completedSets = allSets.filter((s) => s.completed);
-    const durationMs = workout.finishedAt
-      ? workout.finishedAt.getTime() - workout.startedAt.getTime()
-      : 0;
-
     return NextResponse.json({
       workout,
-      summary: {
-        durationMs,
-        exercisesCompleted: workout.exercises.filter((e) => e.sets.some((s) => s.completed)).length,
-        totalSets: completedSets.length,
-        totalVolumeKg: totalVolume(completedSets),
-        newRecords,
-      },
+      summary: computeWorkoutSummary(workout, newRecords),
     });
   });
 }

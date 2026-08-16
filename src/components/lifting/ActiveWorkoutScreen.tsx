@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Check, Trash2, Plus, NotebookPen } from "lucide-react";
+import { ChevronLeft, Check, Trash2, Plus, NotebookPen, Pencil } from "lucide-react";
 import type { Exercise, Units } from "@prisma/client";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
@@ -12,6 +12,8 @@ import { ExercisePickerSheet } from "@/components/lifting/ExercisePickerSheet";
 import { ExerciseFormSheet, type ExerciseFormValues } from "@/components/lifting/ExerciseFormSheet";
 import { RestTimerBar } from "@/components/lifting/RestTimerBar";
 import { FinishSummarySheet, type WorkoutSummary } from "@/components/lifting/FinishSummarySheet";
+import { WorkoutSummaryCard } from "@/components/lifting/WorkoutSummaryCard";
+import { EditWorkoutTimeSheet } from "@/components/lifting/EditWorkoutTimeSheet";
 import { useToast } from "@/components/ui/Toast";
 import { apiSend, ClientApiError } from "@/lib/client-fetch";
 import { createExercise } from "@/lib/exercises-client";
@@ -68,11 +70,13 @@ export function ActiveWorkoutScreen({
   previousByExercise,
   availableExercises,
   units,
+  initialSummary,
 }: {
   workout: WorkoutInput;
   previousByExercise: Record<string, { date: string; sets: { weightKg: number; reps: number }[] } | null>;
   availableExercises: Exercise[];
   units: Units;
+  initialSummary: WorkoutSummary | null;
 }) {
   const router = useRouter();
   const { show } = useToast();
@@ -80,7 +84,9 @@ export function ActiveWorkoutScreen({
   const [name, setName] = useState(workout.name);
   const [notes, setNotes] = useState(workout.notes ?? "");
   const [notesOpen, setNotesOpen] = useState(!!workout.notes);
+  const [startedAt, setStartedAt] = useState(workout.startedAt);
   const [finishedAt, setFinishedAt] = useState(workout.finishedAt);
+  const [editTimeOpen, setEditTimeOpen] = useState(false);
   const [exercises, setExercises] = useState<ExerciseState[]>(
     workout.exercises
       .sort((a, b) => a.order - b.order)
@@ -102,6 +108,7 @@ export function ActiveWorkoutScreen({
   const [deleteExerciseId, setDeleteExerciseId] = useState<string | null>(null);
   const [deleteWorkoutOpen, setDeleteWorkoutOpen] = useState(false);
   const [summary, setSummary] = useState<WorkoutSummary | null>(null);
+  const [completedSummary, setCompletedSummary] = useState<WorkoutSummary | null>(initialSummary);
   const [finishing, setFinishing] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
@@ -113,8 +120,27 @@ export function ActiveWorkoutScreen({
 
   const durationMs = useMemo(() => {
     const end = finishedAt ? new Date(finishedAt).getTime() : now;
-    return Math.max(0, end - new Date(workout.startedAt).getTime());
-  }, [finishedAt, now, workout.startedAt]);
+    return Math.max(0, end - new Date(startedAt).getTime());
+  }, [finishedAt, now, startedAt]);
+
+  async function handleSaveTimes(patch: { startedAt: string; finishedAt: string | null }) {
+    const body: { startedAt: string; finishedAt?: string } = { startedAt: patch.startedAt };
+    if (patch.finishedAt) body.finishedAt = patch.finishedAt;
+    const { workout: updated } = await apiSend<{
+      workout: { startedAt: string; finishedAt: string | null };
+    }>(`/api/workouts/${workout.id}`, "PATCH", body);
+
+    setStartedAt(updated.startedAt);
+    if (updated.finishedAt) setFinishedAt(updated.finishedAt);
+    setCompletedSummary((prev) =>
+      prev && updated.finishedAt
+        ? {
+            ...prev,
+            durationMs: new Date(updated.finishedAt).getTime() - new Date(updated.startedAt).getTime(),
+          }
+        : prev
+    );
+  }
 
   function updateExercise(weId: string, patch: Partial<ExerciseState>) {
     setExercises((prev) => prev.map((ex) => (ex.weId === weId ? { ...ex, ...patch } : ex)));
@@ -279,6 +305,7 @@ export function ActiveWorkoutScreen({
       );
       setFinishedAt(new Date().toISOString());
       setSummary(result);
+      setCompletedSummary(result);
     } catch (err) {
       show(err instanceof ClientApiError ? err.message : "Unable to finish workout.", { variant: "error" });
     } finally {
@@ -356,7 +383,13 @@ export function ActiveWorkoutScreen({
               onBlur={() => saveWorkoutMeta({ name })}
               className="w-full truncate bg-transparent text-lg font-semibold text-ink focus:outline-none"
             />
-            <p className="text-strength-muted text-xs font-medium">{formatDuration(durationMs)}</p>
+            <button
+              onClick={() => setEditTimeOpen(true)}
+              className="flex items-center gap-1 text-strength-muted text-xs font-medium hover:text-strength-soft"
+            >
+              {formatDuration(durationMs)}
+              <Pencil className="h-3 w-3" />
+            </button>
           </div>
           {finishedAt ? (
             <button
@@ -375,6 +408,8 @@ export function ActiveWorkoutScreen({
       </header>
 
       <div className="space-y-4 px-5 py-5">
+        {finishedAt && completedSummary && <WorkoutSummaryCard summary={completedSummary} units={units} />}
+
         <button
           onClick={() => setNotesOpen((v) => !v)}
           className="flex items-center gap-1.5 text-sm font-medium text-ink-secondary hover:text-ink"
@@ -480,6 +515,14 @@ export function ActiveWorkoutScreen({
           setSummary(null);
           router.push("/lifting/history");
         }}
+      />
+
+      <EditWorkoutTimeSheet
+        open={editTimeOpen}
+        startedAt={startedAt}
+        finishedAt={finishedAt}
+        onClose={() => setEditTimeOpen(false)}
+        onSave={handleSaveTimes}
       />
     </div>
   );

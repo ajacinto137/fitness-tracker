@@ -58,7 +58,8 @@ export default async function LiftingDashboardPage() {
       }),
       prisma.workout.findMany({
         where: { userId, startedAt: { gte: oneYearAgo } },
-        select: { startedAt: true },
+        select: { id: true, startedAt: true },
+        orderBy: { startedAt: "desc" },
       }),
     ]);
 
@@ -84,7 +85,7 @@ export default async function LiftingDashboardPage() {
       routines={routines}
       recentExercises={recentExercises}
       workoutsThisWeek={workoutsThisWeek}
-      workoutDates={workoutsForCalendar.map((w) => w.startedAt.toISOString())}
+      calendarWorkouts={workoutsForCalendar.map((w) => ({ id: w.id, startedAt: w.startedAt.toISOString() }))}
       recentPR={
         recentPR
           ? {

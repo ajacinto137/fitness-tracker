@@ -3,6 +3,7 @@ import { getUserSettings } from "@/lib/settings";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { BottomNav } from "@/components/nav/BottomNav";
+import { SwipeNavigation } from "@/components/nav/SwipeNavigation";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const userId = await requireSessionUserId();
@@ -11,7 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <ThemeProvider initialScheme={settings.colorScheme}>
       <ToastProvider>
-        <main className="mx-auto min-h-full w-full max-w-lg pb-28">{children}</main>
+        <SwipeNavigation>{children}</SwipeNavigation>
         <BottomNav />
       </ToastProvider>
     </ThemeProvider>

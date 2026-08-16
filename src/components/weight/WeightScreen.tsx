@@ -165,7 +165,7 @@ export function WeightScreen({
                 </span>
               </p>
             </div>
-            <div className="relative grid grid-cols-3 gap-3 text-center">
+            <div className="relative grid grid-cols-4 gap-2 text-center">
               <TrendStat
                 label="Prev"
                 value={formatDelta(stats.changeFromPrevious)}
@@ -183,6 +183,12 @@ export function WeightScreen({
                 value={formatDelta(stats.change30d)}
                 direction={trendDirection(stats.change30d)}
                 color="success"
+              />
+              <TrendStat
+                label="All time"
+                value={formatDelta(stats.allTime)}
+                direction={trendDirection(stats.allTime)}
+                color="primary"
               />
             </div>
             <Button size="lg" fullWidth gradient="weight" onClick={openCreate} className="relative">

@@ -5,6 +5,57 @@ import {
   heaviestSet,
   totalVolume,
 } from "@/lib/calculations";
+import type { PersonalRecordType } from "@prisma/client";
+
+interface WorkoutRecord {
+  exerciseName: string;
+  type: PersonalRecordType;
+  value: number;
+  reps?: number;
+}
+
+/**
+ * Builds the finish-summary stats (duration, sets, volume, PRs) for a workout.
+ * Shared by the finish endpoint (fresh PRs) and the workout detail loader
+ * (PRs already stored against this workout), so the numbers always match.
+ */
+export function computeWorkoutSummary(
+  workout: {
+    startedAt: Date;
+    finishedAt: Date | null;
+    exercises: { sets: { completed: boolean; weightKg: number; reps: number }[] }[];
+  },
+  records: WorkoutRecord[]
+) {
+  const allSets = workout.exercises.flatMap((e) => e.sets);
+  const completedSets = allSets.filter((s) => s.completed);
+  const durationMs = workout.finishedAt
+    ? workout.finishedAt.getTime() - workout.startedAt.getTime()
+    : 0;
+
+  return {
+    durationMs,
+    exercisesCompleted: workout.exercises.filter((e) => e.sets.some((s) => s.completed)).length,
+    totalSets: completedSets.length,
+    totalVolumeKg: totalVolume(completedSets),
+    newRecords: records,
+  };
+}
+
+/** Personal records that were achieved during a specific (finished) workout. */
+export async function getWorkoutRecords(userId: string, workoutId: string): Promise<WorkoutRecord[]> {
+  const records = await prisma.personalRecord.findMany({
+    where: { userId, workoutId },
+    include: { exercise: true },
+    orderBy: { achievedAt: "asc" },
+  });
+  return records.map((r) => ({
+    exerciseName: r.exercise?.name ?? "Overall Workout",
+    type: r.type,
+    value: r.value,
+    reps: r.reps ?? undefined,
+  }));
+}
 
 /**
  * Sets from the most recent previous workout in which this exercise was performed,

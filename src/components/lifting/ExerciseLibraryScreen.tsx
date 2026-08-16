@@ -9,6 +9,7 @@ import { SubPageHeader } from "@/components/nav/SubPageHeader";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { MarqueeText } from "@/components/ui/MarqueeText";
 import { ExerciseFormSheet, type ExerciseFormValues } from "@/components/lifting/ExerciseFormSheet";
 import { createExercise } from "@/lib/exercises-client";
 import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS } from "@/lib/muscle-groups";
@@ -86,8 +87,8 @@ export function ExerciseLibraryScreen({ initialExercises }: { initialExercises: 
           <div className="space-y-2">
             {filtered.map((ex) => (
               <Link key={ex.id} href={`/lifting/exercises/${ex.id}`}>
-                <Card className="flex items-center justify-between py-3.5 transition-colors hover:bg-surface-hover">
-                  <span className="text-strength-soft truncate font-medium">{ex.name}</span>
+                <Card className="flex items-center justify-between gap-2 py-3.5 transition-colors hover:bg-surface-hover">
+                  <MarqueeText text={ex.name} className="text-strength-soft min-w-0 flex-1 font-medium" />
                   <Badge>{MUSCLE_GROUP_LABELS[ex.muscleGroup]}</Badge>
                 </Card>
               </Link>

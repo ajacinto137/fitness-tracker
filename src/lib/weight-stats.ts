@@ -8,6 +8,7 @@ export interface WeightStats {
   changeFromPrevious: number | null;
   change7d: number | null;
   change30d: number | null;
+  allTime: number | null;
 }
 
 function closestOnOrBefore(sorted: WeightPoint[], target: Date): WeightPoint | null {
@@ -25,6 +26,7 @@ function closestOnOrBefore(sorted: WeightPoint[], target: Date): WeightPoint | n
 export function computeWeightStats(entries: WeightPoint[]): WeightStats | null {
   if (entries.length === 0) return null;
   const sorted = [...entries].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const first = sorted[0];
   const latest = sorted[sorted.length - 1];
   const previous = sorted.length > 1 ? sorted[sorted.length - 2] : null;
   const latestDate = new Date(latest.date);
@@ -42,5 +44,6 @@ export function computeWeightStats(entries: WeightPoint[]): WeightStats | null {
     changeFromPrevious: previous ? latest.weightKg - previous.weightKg : null,
     change7d: priorTo7 ? latest.weightKg - priorTo7.weightKg : null,
     change30d: priorTo30 ? latest.weightKg - priorTo30.weightKg : null,
+    allTime: sorted.length > 1 ? latest.weightKg - first.weightKg : null,
   };
 }

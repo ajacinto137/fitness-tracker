@@ -12,18 +12,29 @@ import { useToast } from "@/components/ui/Toast";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { apiSend, ClientApiError } from "@/lib/client-fetch";
 import { COLOR_SCHEMES, COLOR_SCHEME_META } from "@/lib/color-schemes";
+import { fromKg, roundWeight, unitLabel } from "@/lib/units";
+import { displayDate, formatDateOnly, todayDateOnly } from "@/lib/date";
 import { clsx } from "clsx";
+
+export interface StartingWeightEntry {
+  id: string;
+  date: string;
+  weightKg: number;
+  note: string | null;
+}
 
 export function SettingsScreen({
   initialName,
   email,
   memberSince,
   initialUnits,
+  startingWeightEntry,
 }: {
   initialName: string;
   email: string;
   memberSince: string;
   initialUnits: Units;
+  startingWeightEntry: StartingWeightEntry | null;
 }) {
   const { show } = useToast();
   const { scheme, setScheme } = useTheme();
@@ -31,6 +42,36 @@ export function SettingsScreen({
   const [units, setUnits] = useState<Units>(initialUnits);
   const [savingName, setSavingName] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [startingEntry, setStartingEntry] = useState(startingWeightEntry);
+  const [startingDate, setStartingDate] = useState(
+    startingWeightEntry ? formatDateOnly(startingWeightEntry.date) : ""
+  );
+  const [savingStartDate, setSavingStartDate] = useState(false);
+
+  async function saveStartingDate() {
+    if (!startingEntry || !startingDate) return;
+    setSavingStartDate(true);
+    try {
+      const { entry } = await apiSend<{ entry: StartingWeightEntry }>(
+        `/api/weight/${startingEntry.id}`,
+        "PATCH",
+        {
+          weight: roundWeight(fromKg(startingEntry.weightKg, units)),
+          date: startingDate,
+          note: startingEntry.note,
+        }
+      );
+      setStartingEntry(entry);
+      setStartingDate(formatDateOnly(entry.date));
+      show("Starting weight date updated");
+    } catch (err) {
+      show(err instanceof ClientApiError ? err.message : "Unable to update starting weight date.", {
+        variant: "error",
+      });
+    } finally {
+      setSavingStartDate(false);
+    }
+  }
 
   async function saveName() {
     setSavingName(true);
@@ -95,6 +136,36 @@ export function SettingsScreen({
             ))}
           </Card>
         </section>
+
+        {startingEntry && (
+          <section className="space-y-2">
+            <h2 className="px-1 text-sm font-semibold text-ink-secondary">Starting Weight</h2>
+            <Card className="space-y-3">
+              <p className="text-sm text-ink-secondary">
+                Your earliest logged entry —{" "}
+                <span className="font-medium text-ink">
+                  {roundWeight(fromKg(startingEntry.weightKg, units))} {unitLabel(units)}
+                </span>{" "}
+                on <span className="font-medium text-ink">{displayDate(startingEntry.date, { year: "numeric" })}</span>
+              </p>
+              <Input
+                id="starting-date"
+                label="Date"
+                type="date"
+                value={startingDate}
+                max={todayDateOnly()}
+                onChange={(e) => setStartingDate(e.target.value)}
+              />
+              <Button
+                size="sm"
+                onClick={saveStartingDate}
+                disabled={savingStartDate || !startingDate}
+              >
+                {savingStartDate ? "Saving..." : "Save"}
+              </Button>
+            </Card>
+          </section>
+        )}
 
         <section className="space-y-2">
           <h2 className="px-1 text-sm font-semibold text-ink-secondary">Appearance</h2>

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Textarea } from "@/components/ui/Input";
 import { SetRow, type SetRowData } from "@/components/lifting/SetRow";
+import { MarqueeText } from "@/components/ui/MarqueeText";
 import { formatWeight, unitLabel } from "@/lib/units";
 import type { Units } from "@prisma/client";
 
@@ -81,9 +82,9 @@ export function ExerciseCard({
         <div className="flex min-w-0 items-center gap-2">
           <Link
             href={`/lifting/exercises/${exerciseId}`}
-            className="text-strength-soft min-w-0 truncate font-semibold uppercase tracking-wide hover:text-accent-soft"
+            className="text-strength-soft min-w-0 font-semibold uppercase tracking-wide hover:text-accent-soft"
           >
-            {exerciseName}
+            <MarqueeText text={exerciseName} />
           </Link>
           {locked && (
             <Badge variant="success" icon={CheckCircle2}>

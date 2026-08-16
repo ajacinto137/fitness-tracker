@@ -44,7 +44,7 @@ export function LiftingDashboardScreen({
   recentExercises,
   workoutsThisWeek,
   recentPR,
-  workoutDates,
+  calendarWorkouts,
 }: {
   activeWorkout: Workout | null;
   recentWorkouts: RecentWorkout[];
@@ -52,7 +52,7 @@ export function LiftingDashboardScreen({
   recentExercises: Exercise[];
   workoutsThisWeek: number;
   recentPR: { exerciseName: string; type: PersonalRecordType; value: number; achievedAt: string } | null;
-  workoutDates: string[];
+  calendarWorkouts: { id: string; startedAt: string }[];
 }) {
   const router = useRouter();
   const { show } = useToast();
@@ -99,7 +99,7 @@ export function LiftingDashboardScreen({
           </Card>
         </div>
 
-        <WorkoutCalendar workoutDates={workoutDates} />
+        <WorkoutCalendar workouts={calendarWorkouts} />
 
         {recentPR && (
           <Card accent="achievement" className="flex items-center gap-3">

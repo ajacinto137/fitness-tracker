@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getPreviousExercisePerformance } from "@/lib/workout-service";
+import { computeWorkoutSummary, getPreviousExercisePerformance, getWorkoutRecords } from "@/lib/workout-service";
 
 export async function getWorkoutDetail(userId: string, workoutId: string) {
   const workout = await prisma.workout.findFirst({
@@ -30,5 +30,9 @@ export async function getWorkoutDetail(userId: string, workoutId: string) {
     }
   }
 
-  return { workout, previousByExercise };
+  const summary = workout.finishedAt
+    ? computeWorkoutSummary(workout, await getWorkoutRecords(userId, workoutId))
+    : null;
+
+  return { workout, previousByExercise, summary };
 }
