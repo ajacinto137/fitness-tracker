@@ -13,6 +13,7 @@ export interface ExerciseFormValues {
   muscleGroup: MuscleGroup;
   description: string;
   notes: string;
+  unilateral: boolean;
 }
 
 interface ExerciseFormSheetProps {
@@ -22,7 +23,13 @@ interface ExerciseFormSheetProps {
   onSubmit: (values: ExerciseFormValues) => Promise<void>;
 }
 
-const empty: ExerciseFormValues = { name: "", muscleGroup: "OTHER", description: "", notes: "" };
+const empty: ExerciseFormValues = {
+  name: "",
+  muscleGroup: "OTHER",
+  description: "",
+  notes: "",
+  unilateral: false,
+};
 
 export function ExerciseFormSheet({ open, initial, onClose, onSubmit }: ExerciseFormSheetProps) {
   return (
@@ -96,6 +103,37 @@ function ExerciseForm({
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-medium text-ink-secondary">Type</label>
+        <div className="flex gap-1 rounded-xl bg-surface-2 p-1">
+          <button
+            type="button"
+            onClick={() => setValues((v) => ({ ...v, unilateral: false }))}
+            className={clsx(
+              "flex-1 rounded-lg py-2 text-sm font-medium transition-colors",
+              !values.unilateral ? "bg-gradient-primary text-accent-ink" : "text-ink-secondary hover:text-ink"
+            )}
+          >
+            Bilateral
+          </button>
+          <button
+            type="button"
+            onClick={() => setValues((v) => ({ ...v, unilateral: true }))}
+            className={clsx(
+              "flex-1 rounded-lg py-2 text-sm font-medium transition-colors",
+              values.unilateral ? "bg-gradient-primary text-accent-ink" : "text-ink-secondary hover:text-ink"
+            )}
+          >
+            Single Arm / Leg
+          </button>
+        </div>
+        {values.unilateral && (
+          <p className="px-1 text-xs text-ink-muted">
+            Logs separate left and right sets for this exercise.
+          </p>
+        )}
       </div>
 
       <Textarea

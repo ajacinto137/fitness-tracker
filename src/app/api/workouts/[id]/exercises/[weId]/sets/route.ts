@@ -26,6 +26,8 @@ export async function POST(
         setNumber: nextSetNumber,
         weightKg: lastSet?.weightKg ?? 0,
         reps: lastSet?.reps ?? 0,
+        weightKgRight: lastSet?.weightKgRight ?? 0,
+        repsRight: lastSet?.repsRight ?? 0,
         completed: false,
       },
     });

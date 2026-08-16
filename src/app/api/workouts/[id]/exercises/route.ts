@@ -43,6 +43,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
               setNumber: 1,
               weightKg: previous?.sets[0]?.weightKg ?? 0,
               reps: previous?.sets[0]?.reps ?? 0,
+              weightKgRight: previous?.sets[0]?.weightKgRight ?? 0,
+              repsRight: previous?.sets[0]?.repsRight ?? 0,
               completed: false,
             },
           ],
@@ -55,7 +57,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       {
         workoutExercise,
         previous: previous
-          ? { date: previous.date, sets: previous.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps })) }
+          ? {
+              date: previous.date,
+              sets: previous.sets.map((s) => ({
+                weightKg: s.weightKg,
+                reps: s.reps,
+                weightKgRight: s.weightKgRight,
+                repsRight: s.repsRight,
+              })),
+            }
           : null,
       },
       { status: 201 }

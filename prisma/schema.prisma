@@ -88,6 +88,7 @@ model Exercise {
   muscleGroup MuscleGroup
   description String?
   notes       String?
+  unilateral  Boolean     @default(false)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
@@ -168,6 +169,10 @@ model WorkoutSet {
   setNumber         Int
   weightKg          Float
   reps              Int
+  // Right-side weight/reps for unilateral (single arm/leg) exercises.
+  // Null for ordinary bilateral exercises; weightKg/reps above hold the left side.
+  weightKgRight     Float?
+  repsRight         Int?
   completed         Boolean         @default(false)
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt

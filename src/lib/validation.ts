@@ -34,6 +34,7 @@ export const exerciseSchema = z.object({
   muscleGroup: z.enum(muscleGroups),
   description: z.string().trim().max(1000).optional().nullable(),
   notes: z.string().trim().max(1000).optional().nullable(),
+  unilateral: z.boolean().optional().default(false),
 });
 
 export const routineExerciseSchema = z.object({
@@ -51,6 +52,8 @@ export const routineSchema = z.object({
 export const setSchema = z.object({
   weight: z.number().min(0, "Weight cannot be negative").max(2000),
   reps: z.number().int().min(0, "Reps cannot be negative").max(999),
+  weightRight: z.number().min(0, "Weight cannot be negative").max(2000).optional().nullable(),
+  repsRight: z.number().int().min(0, "Reps cannot be negative").max(999).optional().nullable(),
   completed: z.boolean(),
 });
 

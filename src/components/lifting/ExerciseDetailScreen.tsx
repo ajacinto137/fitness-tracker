@@ -258,6 +258,7 @@ export function ExerciseDetailScreen({
           muscleGroup: exercise.muscleGroup,
           description: exercise.description ?? "",
           notes: exercise.notes ?? "",
+          unilateral: exercise.unilateral,
         }}
         onClose={() => setEditOpen(false)}
         onSubmit={saveEdit}

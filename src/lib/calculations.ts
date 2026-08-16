@@ -7,6 +7,9 @@
 export interface SetLike {
   weightKg: number;
   reps: number;
+  /** Right-side weight/reps for unilateral (single arm/leg) exercises. */
+  weightKgRight?: number | null;
+  repsRight?: number | null;
   completed: boolean;
 }
 
@@ -20,24 +23,51 @@ export function estimateOneRepMax(weightKg: number, reps: number): number {
   return weightKg * (1 + reps / 30);
 }
 
-/** Total volume (weight x reps) for a list of sets. Only completed sets should be passed in. */
+/**
+ * Total volume (weight x reps) for a list of sets. Only completed sets
+ * should be passed in. For unilateral sets, both sides count separately.
+ */
 export function totalVolume(sets: SetLike[]): number {
-  return sets.reduce((sum, s) => (s.completed ? sum + s.weightKg * s.reps : sum), 0);
+  return sets.reduce((sum, s) => {
+    if (!s.completed) return sum;
+    const rightVolume = (s.weightKgRight ?? 0) * (s.repsRight ?? 0);
+    return sum + s.weightKg * s.reps + rightVolume;
+  }, 0);
 }
 
-/** The heaviest completed set by weight (ties broken by higher reps). */
-export function heaviestSet(sets: SetLike[]): SetLike | null {
-  const completed = sets.filter((s) => s.completed && s.weightKg > 0);
-  if (completed.length === 0) return null;
-  return completed.reduce((best, s) =>
-    s.weightKg > best.weightKg || (s.weightKg === best.weightKg && s.reps > best.reps) ? s : best
-  );
+/**
+ * The heaviest completed side-set by weight (ties broken by higher reps).
+ * For unilateral sets, the left and right sides are each considered
+ * independently, since limb strength commonly differs.
+ */
+export function heaviestSet(sets: SetLike[]): { weightKg: number; reps: number } | null {
+  let best: { weightKg: number; reps: number } | null = null;
+  for (const s of sets) {
+    if (!s.completed) continue;
+    const sides = [{ weightKg: s.weightKg, reps: s.reps }];
+    if (s.weightKgRight != null || s.repsRight != null) {
+      sides.push({ weightKg: s.weightKgRight ?? 0, reps: s.repsRight ?? 0 });
+    }
+    for (const side of sides) {
+      if (side.weightKg <= 0) continue;
+      if (!best || side.weightKg > best.weightKg || (side.weightKg === best.weightKg && side.reps > best.reps)) {
+        best = side;
+      }
+    }
+  }
+  return best;
 }
 
-/** The best estimated 1RM among completed sets. */
+/** The best estimated 1RM among completed sets (either side, for unilateral). */
 export function bestEstimatedOneRepMax(sets: SetLike[]): number {
-  const completed = sets.filter((s) => s.completed);
-  return completed.reduce((max, s) => Math.max(max, estimateOneRepMax(s.weightKg, s.reps)), 0);
+  return sets.reduce((max, s) => {
+    if (!s.completed) return max;
+    let next = Math.max(max, estimateOneRepMax(s.weightKg, s.reps));
+    if (s.weightKgRight != null || s.repsRight != null) {
+      next = Math.max(next, estimateOneRepMax(s.weightKgRight ?? 0, s.repsRight ?? 0));
+    }
+    return next;
+  }, 0);
 }
 
 export interface DatedValue {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Check, Trash2, Plus, NotebookPen, Pencil } from "lucide-react";
+import { ChevronLeft, Check, Trash2, Plus, NotebookPen, Pencil, BookmarkPlus } from "lucide-react";
 import type { Exercise, Units } from "@prisma/client";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
@@ -14,6 +14,7 @@ import { RestTimerBar } from "@/components/lifting/RestTimerBar";
 import { FinishSummarySheet, type WorkoutSummary } from "@/components/lifting/FinishSummarySheet";
 import { WorkoutSummaryCard } from "@/components/lifting/WorkoutSummaryCard";
 import { EditWorkoutTimeSheet } from "@/components/lifting/EditWorkoutTimeSheet";
+import { SaveAsRoutineSheet } from "@/components/lifting/SaveAsRoutineSheet";
 import { useToast } from "@/components/ui/Toast";
 import { apiSend, ClientApiError } from "@/lib/client-fetch";
 import { createExercise } from "@/lib/exercises-client";
@@ -26,6 +27,8 @@ interface SetInput {
   setNumber: number;
   weightKg: number;
   reps: number;
+  weightKgRight: number | null;
+  repsRight: number | null;
   completed: boolean;
 }
 
@@ -34,7 +37,7 @@ interface ExerciseInput {
   order: number;
   notes: string | null;
   completed: boolean;
-  exercise: { id: string; name: string };
+  exercise: { id: string; name: string; unilateral: boolean };
   sets: SetInput[];
 }
 
@@ -51,9 +54,17 @@ interface ExerciseState {
   weId: string;
   exerciseId: string;
   exerciseName: string;
+  unilateral: boolean;
   notes: string;
   completed: boolean;
   sets: SetRowData[];
+}
+
+interface PreviousSetInput {
+  weightKg: number;
+  reps: number;
+  weightKgRight: number | null;
+  repsRight: number | null;
 }
 
 function toSetRow(s: SetInput, units: Units): SetRowData {
@@ -61,6 +72,8 @@ function toSetRow(s: SetInput, units: Units): SetRowData {
     id: s.id,
     weight: s.weightKg > 0 ? String(roundWeight(fromKg(s.weightKg, units))) : "",
     reps: s.reps > 0 ? String(s.reps) : "",
+    weightRight: s.weightKgRight && s.weightKgRight > 0 ? String(roundWeight(fromKg(s.weightKgRight, units))) : "",
+    repsRight: s.repsRight && s.repsRight > 0 ? String(s.repsRight) : "",
     completed: s.completed,
   };
 }
@@ -73,7 +86,7 @@ export function ActiveWorkoutScreen({
   initialSummary,
 }: {
   workout: WorkoutInput;
-  previousByExercise: Record<string, { date: string; sets: { weightKg: number; reps: number }[] } | null>;
+  previousByExercise: Record<string, { date: string; sets: PreviousSetInput[] } | null>;
   availableExercises: Exercise[];
   units: Units;
   initialSummary: WorkoutSummary | null;
@@ -94,6 +107,7 @@ export function ActiveWorkoutScreen({
         weId: we.id,
         exerciseId: we.exercise.id,
         exerciseName: we.exercise.name,
+        unilateral: we.exercise.unilateral,
         notes: we.notes ?? "",
         completed: we.completed,
         sets: we.sets.map((s) => toSetRow(s, units)),
@@ -107,6 +121,7 @@ export function ActiveWorkoutScreen({
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteExerciseId, setDeleteExerciseId] = useState<string | null>(null);
   const [deleteWorkoutOpen, setDeleteWorkoutOpen] = useState(false);
+  const [saveRoutineOpen, setSaveRoutineOpen] = useState(false);
   const [summary, setSummary] = useState<WorkoutSummary | null>(null);
   const [completedSummary, setCompletedSummary] = useState<WorkoutSummary | null>(initialSummary);
   const [finishing, setFinishing] = useState(false);
@@ -157,7 +172,7 @@ export function ActiveWorkoutScreen({
   async function handleSetChange(
     weId: string,
     setId: string,
-    patch: Partial<{ weight: string; reps: string; completed: boolean }>
+    patch: Partial<{ weight: string; reps: string; weightRight: string; repsRight: string; completed: boolean }>
   ) {
     setExercises((prev) =>
       prev.map((ex) =>
@@ -170,9 +185,12 @@ export function ActiveWorkoutScreen({
     // The set API stores weightKg and converts from the user's display unit
     // itself (see /api/sets/[id]), so this must send the raw entered number —
     // converting here too would double-convert and corrupt the stored value.
-    const body: { weight?: number; reps?: number; completed?: boolean } = {};
+    const body: { weight?: number; reps?: number; weightRight?: number; repsRight?: number; completed?: boolean } =
+      {};
     if (patch.weight !== undefined) body.weight = patch.weight ? Number(patch.weight) : 0;
     if (patch.reps !== undefined) body.reps = patch.reps ? Number(patch.reps) : 0;
+    if (patch.weightRight !== undefined) body.weightRight = patch.weightRight ? Number(patch.weightRight) : 0;
+    if (patch.repsRight !== undefined) body.repsRight = patch.repsRight ? Number(patch.repsRight) : 0;
     if (patch.completed !== undefined) body.completed = patch.completed;
 
     try {
@@ -234,7 +252,7 @@ export function ActiveWorkoutScreen({
     try {
       const { workoutExercise, previous } = await apiSend<{
         workoutExercise: { id: string; notes: string | null; sets: SetInput[] };
-        previous: { date: string; sets: { weightKg: number; reps: number }[] } | null;
+        previous: { date: string; sets: PreviousSetInput[] } | null;
       }>(`/api/workouts/${workout.id}/exercises`, "POST", { exerciseId: newExercise.id });
 
       setExercises((prev) => [
@@ -243,6 +261,7 @@ export function ActiveWorkoutScreen({
           weId: workoutExercise.id,
           exerciseId: newExercise.id,
           exerciseName: newExercise.name,
+          unilateral: newExercise.unilateral,
           notes: workoutExercise.notes ?? "",
           completed: false,
           sets: workoutExercise.sets.map((s) => toSetRow(s, units)),
@@ -365,6 +384,40 @@ export function ActiveWorkoutScreen({
     }
   }
 
+  async function handleSaveAsRoutine(routineName: string) {
+    const routinePayload = {
+      name: routineName,
+      exercises: exercises.map((ex, index) => {
+        const loggedSets = ex.sets.filter((s) => s.completed && s.reps);
+        const repsCounts = new Map<number, number>();
+        for (const s of loggedSets) {
+          const reps = Number(s.reps);
+          if (reps > 0) repsCounts.set(reps, (repsCounts.get(reps) ?? 0) + 1);
+        }
+        let targetReps: number | null = null;
+        let bestCount = 0;
+        for (const [reps, count] of repsCounts) {
+          if (count > bestCount) {
+            targetReps = reps;
+            bestCount = count;
+          }
+        }
+        return {
+          exerciseId: ex.exerciseId,
+          order: index,
+          targetSets: loggedSets.length || ex.sets.length || 1,
+          targetReps,
+        };
+      }),
+    };
+
+    const { routine } = await apiSend<{ routine: { id: string } }>("/api/routines", "POST", routinePayload);
+    show(`Saved "${routineName}" to your routines.`, {
+      actionLabel: "View",
+      onAction: () => router.push(`/lifting/routines/${routine.id}`),
+    });
+  }
+
   return (
     <div>
       <header className="pt-safe sticky top-0 z-30 border-b border-border bg-app/95 backdrop-blur-lg">
@@ -410,6 +463,12 @@ export function ActiveWorkoutScreen({
       <div className="space-y-4 px-5 py-5">
         {finishedAt && completedSummary && <WorkoutSummaryCard summary={completedSummary} units={units} />}
 
+        {finishedAt && (
+          <Button variant="secondary" fullWidth onClick={() => setSaveRoutineOpen(true)}>
+            <BookmarkPlus className="h-4 w-4" /> Save as Routine
+          </Button>
+        )}
+
         <button
           onClick={() => setNotesOpen((v) => !v)}
           className="flex items-center gap-1.5 text-sm font-medium text-ink-secondary hover:text-ink"
@@ -441,6 +500,7 @@ export function ActiveWorkoutScreen({
               <ExerciseCard
                 exerciseId={ex.exerciseId}
                 exerciseName={ex.exerciseName}
+                unilateral={ex.unilateral}
                 notes={ex.notes}
                 sets={ex.sets}
                 previousSets={previousMap[ex.exerciseId]?.sets ?? null}
@@ -523,6 +583,13 @@ export function ActiveWorkoutScreen({
         finishedAt={finishedAt}
         onClose={() => setEditTimeOpen(false)}
         onSave={handleSaveTimes}
+      />
+
+      <SaveAsRoutineSheet
+        open={saveRoutineOpen}
+        defaultName={name}
+        onClose={() => setSaveRoutineOpen(false)}
+        onSave={handleSaveAsRoutine}
       />
     </div>
   );

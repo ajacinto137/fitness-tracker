@@ -13,6 +13,20 @@ import { MarqueeText } from "@/components/ui/MarqueeText";
 import { formatWeight, unitLabel } from "@/lib/units";
 import type { Units } from "@prisma/client";
 
+interface PreviousSet {
+  weightKg: number;
+  reps: number;
+  weightKgRight: number | null;
+  repsRight: number | null;
+}
+
+function formatPreviousSet(s: PreviousSet, units: Units, unilateral: boolean): string {
+  const left = `${formatWeight(s.weightKg, units)} × ${s.reps}`;
+  if (!unilateral) return left;
+  const right = s.weightKgRight != null ? `${formatWeight(s.weightKgRight, units)} × ${s.repsRight ?? 0}` : null;
+  return right ? `L ${left}, R ${right}` : `L ${left}`;
+}
+
 export function ExerciseCard({
   exerciseId,
   exerciseName,
@@ -20,6 +34,7 @@ export function ExerciseCard({
   sets,
   previousSets,
   units,
+  unilateral = false,
   canReorder,
   isFirst,
   isLast,
@@ -42,8 +57,9 @@ export function ExerciseCard({
   exerciseName: string;
   notes: string;
   sets: SetRowData[];
-  previousSets: { weightKg: number; reps: number }[] | null;
+  previousSets: PreviousSet[] | null;
   units: Units;
+  unilateral?: boolean;
   canReorder: boolean;
   isFirst: boolean;
   isLast: boolean;
@@ -52,7 +68,10 @@ export function ExerciseCard({
   isLastIncomplete?: boolean;
   isCurrent?: boolean;
   completing?: boolean;
-  onSetChange: (setId: string, patch: Partial<{ weight: string; reps: string; completed: boolean }>) => void;
+  onSetChange: (
+    setId: string,
+    patch: Partial<{ weight: string; reps: string; weightRight: string; repsRight: string; completed: boolean }>
+  ) => void;
   onSetDelete: (setId: string) => void;
   onAddSet: () => void;
   onRemoveExercise: () => void;
@@ -68,7 +87,7 @@ export function ExerciseCard({
   const highlighted = isCurrent && !locked && !workoutFinished;
 
   const previousLabel = previousSets
-    ? previousSets.map((s) => `${formatWeight(s.weightKg, units)} × ${s.reps}`).join(", ")
+    ? previousSets.map((s) => formatPreviousSet(s, units, unilateral)).join("; ")
     : null;
 
   return (
@@ -149,24 +168,24 @@ export function ExerciseCard({
       )}
 
       <div className="space-y-2">
-        <div className="grid grid-cols-[1.5rem_1fr_4.5rem_4rem_2.5rem_2rem] gap-2 px-0.5 text-xs font-medium text-ink-muted">
-          <span className="text-center">Set</span>
-          <span>Previous</span>
-          <span className="text-center">{unitLabel(units)}</span>
-          <span className="text-center">Reps</span>
-          <span className="text-center">✓</span>
-          <span />
-        </div>
+        {!unilateral && (
+          <div className="grid grid-cols-[1.5rem_1fr_4.5rem_4rem_2.5rem_2rem] gap-2 px-0.5 text-xs font-medium text-ink-muted">
+            <span className="text-center">Set</span>
+            <span>Previous</span>
+            <span className="text-center">{unitLabel(units)}</span>
+            <span className="text-center">Reps</span>
+            <span className="text-center">✓</span>
+            <span />
+          </div>
+        )}
         {sets.map((set, index) => (
           <SetRow
             key={set.id}
             index={index}
             set={set}
-            previousLabel={
-              previousSets?.[index]
-                ? `${formatWeight(previousSets[index].weightKg, units)} × ${previousSets[index].reps}`
-                : null
-            }
+            unilateral={unilateral}
+            unitLabel={unitLabel(units)}
+            previousLabel={previousSets?.[index] ? formatPreviousSet(previousSets[index], units, unilateral) : null}
             disabled={locked}
             onChange={(patch) => onSetChange(set.id, patch)}
             onDelete={() => onSetDelete(set.id)}

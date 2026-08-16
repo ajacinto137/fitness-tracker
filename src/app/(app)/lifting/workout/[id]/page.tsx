@@ -17,7 +17,13 @@ export default async function WorkoutPage({ params }: { params: Promise<{ id: st
 
   if (!detail) notFound();
 
-  const previousByExercise: Record<string, { date: string; sets: { weightKg: number; reps: number }[] } | null> = {};
+  const previousByExercise: Record<
+    string,
+    {
+      date: string;
+      sets: { weightKg: number; reps: number; weightKgRight: number | null; repsRight: number | null }[];
+    } | null
+  > = {};
   for (const [exerciseId, value] of Object.entries(detail.previousByExercise)) {
     previousByExercise[exerciseId] = value ? { date: value.date.toISOString(), sets: value.sets } : null;
   }
@@ -35,12 +41,14 @@ export default async function WorkoutPage({ params }: { params: Promise<{ id: st
           order: we.order,
           notes: we.notes,
           completed: we.completed,
-          exercise: { id: we.exercise.id, name: we.exercise.name },
+          exercise: { id: we.exercise.id, name: we.exercise.name, unilateral: we.exercise.unilateral },
           sets: we.sets.map((s) => ({
             id: s.id,
             setNumber: s.setNumber,
             weightKg: s.weightKg,
             reps: s.reps,
+            weightKgRight: s.weightKgRight,
+            repsRight: s.repsRight,
             completed: s.completed,
           })),
         })),

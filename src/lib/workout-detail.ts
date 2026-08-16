@@ -15,7 +15,10 @@ export async function getWorkoutDetail(userId: string, workoutId: string) {
 
   const previousByExercise: Record<
     string,
-    { date: Date; sets: { weightKg: number; reps: number }[] } | null
+    {
+      date: Date;
+      sets: { weightKg: number; reps: number; weightKgRight: number | null; repsRight: number | null }[];
+    } | null
   > = {};
 
   for (const we of workout.exercises) {
@@ -24,7 +27,12 @@ export async function getWorkoutDetail(userId: string, workoutId: string) {
       previousByExercise[we.exerciseId] = previous
         ? {
             date: previous.date,
-            sets: previous.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps })),
+            sets: previous.sets.map((s) => ({
+              weightKg: s.weightKg,
+              reps: s.reps,
+              weightKgRight: s.weightKgRight,
+              repsRight: s.repsRight,
+            })),
           }
         : null;
     }
