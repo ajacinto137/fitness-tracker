@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useId, useState } from "react";
+import { Fragment, useId } from "react";
 import {
   Line,
   Area,
@@ -12,6 +12,7 @@ import {
   Tooltip,
 } from "recharts";
 import { displayDate } from "@/lib/date";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 export interface ChartPoint {
   date: string;
@@ -39,19 +40,6 @@ interface TooltipRenderProps {
   active?: boolean;
   label?: string | number;
   payload?: { payload: ChartPoint }[];
-}
-
-function useReducedMotion() {
-  const [reduced, setReduced] = useState(() =>
-    typeof window !== "undefined" ? window.matchMedia("(prefers-reduced-motion: reduce)").matches : false
-  );
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
-    query.addEventListener("change", handler);
-    return () => query.removeEventListener("change", handler);
-  }, []);
-  return reduced;
 }
 
 function CustomTooltip({

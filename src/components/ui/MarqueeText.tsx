@@ -3,8 +3,8 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { clsx } from "clsx";
 
-const PIXELS_PER_SECOND = 40;
-const MIN_DURATION_S = 4;
+const PIXELS_PER_SECOND = 18;
+const MIN_DURATION_S = 6;
 
 /**
  * Renders text truncated with an ellipsis, unless it overflows its
